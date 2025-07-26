@@ -14,7 +14,7 @@ export const getTicketsbyClient = async (client: string) => {
   };
 };
 
-export const createNewTicket = async (payload: Ticket) => {
+export const createNewTicket = async (payload: any) => {
   const { error } = await supabase.from("complaints").insert(payload);
 
   if (error) throw error;
