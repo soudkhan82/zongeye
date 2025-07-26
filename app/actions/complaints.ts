@@ -1,42 +1,28 @@
-
 "use server";
 import { Ticket } from "@/interfaces";
 import supabase from "../config/supabase-config";
 const PAGE_SIZE = 5;
 export const getTicketsbyClient = async (client: string) => {
-  try {
-    const { data, error } = await supabase
-      .from("complaints")
-      .select("*")
-      .ilike("Client", `{% ${client}}`);
-    if (error) throw error;
-    return {
-      success: true,
-      data: data,
-    };
-  } catch (e: any) {
-    return {
-      success: false,
-      message: e.message,
-    };
-  }
+  const { data, error } = await supabase
+    .from("complaints")
+    .select("*")
+    .ilike("Client", `{% ${client}}`);
+  if (error) throw error;
+  return {
+    success: true,
+    data: data,
+  };
 };
-export const createNewTicket = async (payload: any) => {
-  try {
-    const { data, error } = await supabase.from("complaints").insert(payload);
 
-    if (error) throw error;
-    return {
-      success: true,
-      message: "Ticket Successfully created",
-      //we do not need to return the data here , since its a post operation to store the data
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
-  }
+export const createNewTicket = async (payload: any) => {
+  const { data, error } = await supabase.from("complaints").insert(payload);
+
+  if (error) throw error;
+  return {
+    success: true,
+    message: "Ticket Successfully created",
+    //we do not need to return the data here , since its a post operation to store the data
+  };
 };
 
 export const getTicketsAll = async (

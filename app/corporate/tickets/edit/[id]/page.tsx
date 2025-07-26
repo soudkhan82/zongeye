@@ -9,7 +9,7 @@ interface Props {
 }
 async function EditTicket({ params }: Props) {
   const { id } = await params;
-  const response: any = await getTicketById(id!);
+  const response = await getTicketById(id!);
   if (!response.success) {
     return <ErrorMessage error={response.message} />;
   }

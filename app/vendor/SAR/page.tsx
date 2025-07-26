@@ -8,9 +8,9 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Loader from "@/components/ui/loader";
 import { getSiteAccessRequestAll } from "@/app/actions/vendor";
-import { ActionItem, SiteAccessRequest } from "@/interfaces";
+import { SiteAccessRequest } from "@/interfaces";
 import ErrorMessage from "@/components/ui/error-message";
-import { BookCheckIcon, BookOpen, BookOpenText, Edit2 } from "lucide-react";
+import { BookOpenText, Edit2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -31,7 +31,7 @@ const columns = [
 ];
 function SiteAccessRequestsList() {
   const router = useRouter();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<SiteAccessRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [submittedsearch, setSubmittedSearch] = useState("");

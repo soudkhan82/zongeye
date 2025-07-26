@@ -38,6 +38,7 @@ import {
   ServiceType,
   Status,
 } from "@/constants";
+import { Ticket } from "@/interfaces";
 
 interface TicketFormProps {
   initialValues?: any;
@@ -98,7 +99,7 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
 
   const serviceType = form.watch("Service_Type");
   const region = form.watch("Acc_Region");
-
+  let message = "";
   const fetchLinksData = async () => {
     try {
       setLoading(true);
@@ -112,8 +113,13 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
         setLinks(cleanedData);
         console.log(cleanedData);
       }
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e: unknown) {
+      let message = "";
+      if (e instanceof Error) {
+        message = e.message;
+      } else if (typeof e === "string") {
+        message = e;
+      }
     } finally {
       setLoading(false);
     }
@@ -132,8 +138,13 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
         setClients(cleanedData);
         console.log(cleanedData);
       }
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (typeof err === "string") {
+        message = err;
+      }
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -169,8 +180,10 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
       } else {
         toast.error(response.message);
       }
-    } catch (e:any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (typeof err === "string") toast.error(err);
     } finally {
       setLoading(false);
     }
@@ -178,9 +191,10 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
 
   useEffect(() => {
     if (initialValues) {
-      Object.keys(initialValues).forEach((key: any) => {
-        form.setValue(key, initialValues[key]);
-      });
+      // Object.keys(initialValues).forEach((key: any) => {
+      //   form.setValue(key, initialValues[key]);
+      // });
+      form.reset(initialValues);
     }
   }, [initialValues]);
   return (
@@ -619,7 +633,7 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
           </div>
         </form>
       </Form>
-    </div>  
+    </div>
   );
 }
 

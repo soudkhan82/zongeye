@@ -6,7 +6,6 @@ import {
   ChevronLast,
   ChevronLeft,
   ChevronRight,
-  Divide,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 

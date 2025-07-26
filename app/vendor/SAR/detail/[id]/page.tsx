@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ActionItem, SiteAccessRequest } from "@/interfaces";
+import { SiteAccessRequest } from "@/interfaces";
 
 import { Button } from "@/components/ui/button";
 
@@ -13,7 +13,7 @@ interface Props {
 }
 async function SARDetailPage({ params }: Props) {
   const { id } = await params;
-  const response: any = await getSiteAccessRequestById(id!);
+  const response = await getSiteAccessRequestById(id!);
   const sarItem: SiteAccessRequest = response.data;
   if (!response.success) {
     return <ErrorMessage error={response.message} />;

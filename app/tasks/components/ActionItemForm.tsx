@@ -72,9 +72,10 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
   });
   useEffect(() => {
     if (initialValues) {
-      Object.keys(initialValues).forEach((key: any) => {
-        form.setValue(key, initialValues[key]);
-      });
+      form.reset(initialValues);
+      // Object.keys(initialValues).forEach((key: any) => {
+      //   form.setValue(key, initialValues[key]);
+      // });
     }
   }, [initialValues]);
 
@@ -113,8 +114,14 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
       } else {
         toast.error(response.message);
       }
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (error: unknown) {
+      let message = "";
+      if (error instanceof Error) {
+        message = error.message;
+      } else if (typeof error === "string") {
+        message = error;
+      }
+      toast.error(message);
     } finally {
       setLoading(false);
     }
