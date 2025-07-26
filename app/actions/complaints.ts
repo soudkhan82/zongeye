@@ -14,8 +14,8 @@ export const getTicketsbyClient = async (client: string) => {
   };
 };
 
-export const createNewTicket = async (payload: any) => {
-  const { data, error } = await supabase.from("complaints").insert(payload);
+export const createNewTicket = async (payload: Ticket) => {
+  const { error } = await supabase.from("complaints").insert(payload);
 
   if (error) throw error;
   return {
@@ -56,11 +56,13 @@ export const getTicketById = async (id: number) => {
       success: true,
       data: data[0],
     };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };
 
@@ -69,25 +71,27 @@ export const editTicketByid = async ({
   payload,
 }: {
   ticket_id: number;
-  payload: any;
+  payload: Ticket;
 }) => {
-  try {
-    const { data, error } = await supabase
-      .from("complaints")
-      .update(payload)
-      .eq("id", ticket_id);
-    if (error) throw error;
+  const { error } = await supabase
+    .from("complaints")
+    .update(payload)
+    .eq("id", ticket_id);
+  if (error) throw error;
 
-    return {
-      success: true,
-      message: "Link updated successfully",
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
-  }
+  return {
+    success: true,
+    message: "Link updated successfully",
+  };
+
+  // catch (error: unknown) {
+  //   let message = "";
+  //   if (error instanceof Error) {
+  //     message = error.message;
+  //   } else if (typeof error === "string") {
+  //     message = error;
+  //   }
+  // }
 };
 
 export const deleteTicketByid = async (ticketid: number) => {
@@ -101,10 +105,12 @@ export const deleteTicketByid = async (ticketid: number) => {
       success: true,
       message: "Ticket Deleted successfully",
     };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };

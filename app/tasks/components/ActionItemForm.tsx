@@ -32,8 +32,9 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ActionItem } from "@/interfaces";
 interface ActionItemProps {
-  initialValues?: any;
+  initialValues: any;
   formType?: "add" | "edit";
 }
 
@@ -72,10 +73,10 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
   });
   useEffect(() => {
     if (initialValues) {
-      form.reset(initialValues);
-      // Object.keys(initialValues).forEach((key: any) => {
-      //   form.setValue(key, initialValues[key]);
-      // });
+      // form.reset(initialValues);
+      Object.keys(initialValues).forEach((key: any) => {
+        form.setValue(key, initialValues[key]);
+      });
     }
   }, [initialValues]);
 
@@ -96,6 +97,7 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     let response = null;
+    let message = "";
     try {
       setLoading(true);
       if (formType == "add") {
@@ -105,17 +107,10 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
       } else {
         response = await editActionByid({
           action_id: initialValues.id,
-          payload: { ...values },
+          payload: values,
         });
       }
-      if (response.success) {
-        toast.success(response.message);
-        router.push("/tasks");
-      } else {
-        toast.error(response.message);
-      }
     } catch (error: unknown) {
-      let message = "";
       if (error instanceof Error) {
         message = error.message;
       } else if (typeof error === "string") {
@@ -126,6 +121,12 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialValues) {
+      form.reset(initialValues);
+    }
+  }, [initialValues]);
   return (
     <div className=" flex items-center p-3 m-4">
       <Form {...form}>

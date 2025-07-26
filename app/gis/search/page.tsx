@@ -143,7 +143,7 @@ function GISMapList() {
               <span className="px-3 py-1">Page {page}</span>
               <Button
                 onClick={() => setPage((p) => p + 1)}
-                disabled={points.length < 5}
+                disabled={points.length < 8}
               >
                 NEXT
               </Button>
@@ -153,7 +153,7 @@ function GISMapList() {
           <div className="flex-1 ">
             <MapContainer
               center={center}
-              zoom={11}
+              zoom={6}
               style={{ height: "100%", width: "100%" }}
             >
               <TileLayer

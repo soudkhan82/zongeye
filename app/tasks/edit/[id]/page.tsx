@@ -1,4 +1,4 @@
-import { editActionByid, getActionById } from "@/app/actions/tasks";
+import { getActionById } from "@/app/actions/tasks";
 import ErrorMessage from "@/components/ui/error-message";
 import PageTitle from "@/components/ui/page-title";
 import React from "react";
@@ -10,7 +10,7 @@ interface Props {
 
 async function EditActionItem({ params }: Props) {
   const { id } = await params;
-  const response: any = await getActionById(id!);
+  const response = await getActionById(id!);
   if (!response.success) {
     return <ErrorMessage error={response.message} />;
   }

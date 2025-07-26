@@ -2,7 +2,7 @@
 import { ActionItem } from "@/interfaces";
 import supabase from "../config/supabase-config";
 const PAGE_SIZE = 5;
-export const createNewActionItem = async (payload: any) => {
+export const createNewActionItem = async (payload: ActionItem) => {
   try {
     const { error } = await supabase.from("actions").insert(payload);
 
@@ -11,11 +11,13 @@ export const createNewActionItem = async (payload: any) => {
       success: true,
       message: "Ticket Successfully created",
     };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };
 
@@ -31,11 +33,13 @@ export const getActionById = async (id: number) => {
       success: true,
       data: data[0],
     };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };
 export const editActionByid = async ({
@@ -43,24 +47,26 @@ export const editActionByid = async ({
   payload,
 }: {
   action_id: number;
-  payload: any;
+  payload: ActionItem;
 }) => {
   try {
     const { data, error } = await supabase
       .from("actions")
       .update(payload)
       .eq("id", action_id);
-    if (error) throw error;
 
+    if (error) throw error;
     return {
       success: true,
-      message: "Action item updated successfully",
+      message: "Ticket updated successfully",
     };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };
 

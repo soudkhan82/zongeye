@@ -34,7 +34,7 @@ const columns = [
 
 function SndList() {
   const router = useRouter();
-  const [actions, setActions] = useState<any[]>([]);
+  const [actions, setActions] = useState<ActionItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [submittedsearch, setSubmittedSearch] = useState("");
@@ -42,13 +42,20 @@ function SndList() {
   const [total, setTotal] = useState(0);
 
   const fetchData = async (searchterm: string, page: number) => {
+    let message = "";
     try {
       setLoading(true);
       const { data, total_records } = await getActionsAll(searchterm, page);
       setActions(data);
       setTotal(total_records);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        message = error.message;
+      } else if (typeof error === "string") {
+        message = error;
+      }
+
+      if (error) toast.error(message);
     } finally {
       setLoading(false);
     }

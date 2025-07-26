@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-
+import { Ticket } from "@/interfaces";
 import {
   Form,
   FormControl,
@@ -38,10 +38,9 @@ import {
   ServiceType,
   Status,
 } from "@/constants";
-import { Ticket } from "@/interfaces";
 
 interface TicketFormProps {
-  initialValues?: any;
+  initialValues: any;
   formType?: "add" | "edit";
 }
 
@@ -99,8 +98,9 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
 
   const serviceType = form.watch("Service_Type");
   const region = form.watch("Acc_Region");
-  let message = "";
+
   const fetchLinksData = async () => {
+    let message = "";
     try {
       setLoading(true);
       const linksData = await getTicketFormLinks(serviceType, region);
@@ -114,7 +114,6 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
         console.log(cleanedData);
       }
     } catch (e: unknown) {
-      let message = "";
       if (e instanceof Error) {
         message = e.message;
       } else if (typeof e === "string") {
@@ -126,6 +125,7 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
   };
 
   const fetchClientsData = async () => {
+    let message = "";
     try {
       setLoading(true);
       const ClientData = await getTicketFormClients(serviceType, region);
@@ -155,6 +155,7 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
   }, [serviceType, region]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    let message = "";
     let response = null;
     const start_time = new Date(values.Complaint_Time);
     const end_time = new Date(values.Resolution_Time);

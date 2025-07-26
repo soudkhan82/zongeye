@@ -2,28 +2,31 @@
 import supabase from "../config/supabase-config";
 export const getCorporateDashData = async () => {
   try {
-    let qry = supabase.from("complaints").select("*").limit(200);
+    const qry = supabase.from("complaints").select("*").limit(200);
     const { data, error } = await qry;
-    console.log(data?.length);
 
     if (error) throw new Error(error.message);
     const responseData = {
       totalTickets: data?.length,
 
-      DIATickets: data?.filter((element: any) => element.Service_Type === "DIA")
+      DIATickets: data?.filter((element) => element.Service_Type === "DIA")
         .length,
-      DPLCTickets: data?.filter(
-        (element: any) => element.Service_Type === "DPLC"
-      ).length,
-      PRITickets: data?.filter((element: any) => element.Service_Type === "PRI")
+      DPLCTickets: data?.filter((element) => element.Service_Type === "DPLC")
+        .length,
+      PRITickets: data?.filter((element) => element.Service_Type === "PRI")
         .length,
     };
     return {
       success: true,
       data: responseData,
     };
-  } catch (e: any) {
-    return e.message;
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };
 

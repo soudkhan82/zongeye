@@ -17,7 +17,7 @@ export const registerNewUser = async ({
 }) => {
   try {
     // check of user already exists using email
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("user_profiles")
       .select("email")
       .eq("email", email);
@@ -39,7 +39,7 @@ export const registerNewUser = async ({
     };
     // insert the new record in database
 
-    const { data: userData, error: userError } = await supabase
+    const { error: userError } = await supabase
       .from("user_profiles")
       .insert(newUserObj);
     if (userError) {
@@ -52,11 +52,13 @@ export const registerNewUser = async ({
       success: true,
       message: "User Registered Successfully",
     };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };
 
@@ -118,11 +120,13 @@ export const loginuser = async ({
       success: true,
       data: token,
     };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };
 
@@ -145,10 +149,12 @@ export const getCurrentUser = async (token: string) => {
       success: true,
       data: data[0],
     };
-  } catch (e: any) {
-    return {
-      success: false,
-      message: e.message,
-    };
+  } catch (error: unknown) {
+    let message = "";
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "string") {
+      message = error;
+    }
   }
 };

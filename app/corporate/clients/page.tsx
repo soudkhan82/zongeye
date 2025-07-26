@@ -1,5 +1,5 @@
 "use client";
-import { getAllClientLinks, getlinksByClient } from "@/app/actions/clients";
+import { getlinksByClient } from "@/app/actions/clients";
 
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/ui/loader";
@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 const columns = ["ID", "NMS ID", "Client", "Service Type"];
 
 function CorpClientsList() {
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,13 +32,19 @@ function CorpClientsList() {
   //const limit = 10;
   const router = useRouter();
   const loadData = async (searchTerm: string, page: number) => {
+    let message = "";
     try {
       setLoading(true);
       const { data, total_records } = await getlinksByClient(searchTerm, page);
       setClients(data);
       setTotal(total_records);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (typeof err === "string") {
+        message = err;
+      }
+      toast.error(message);
     } finally {
       setLoading(false);
     }
