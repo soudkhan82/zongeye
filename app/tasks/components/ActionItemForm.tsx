@@ -132,7 +132,7 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
     if (initialValues) {
       form.reset(initialValues);
     }
-  }, [initialValues]);
+  }, [initialValues, form]);
   return (
     <div className=" flex items-center p-3 m-4">
       <Form {...form}>

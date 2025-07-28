@@ -1,4 +1,3 @@
-"use client";
 import { getlinkById } from "@/app/actions/clients";
 import ErrorMessage from "@/components/ui/error-message";
 import { Client } from "@/interfaces";
