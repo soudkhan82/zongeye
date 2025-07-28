@@ -34,7 +34,7 @@ const columns = [
 function TicketsList() {
   const router = useRouter();
 
-  const [tickets, setTickets] = React.useState<any[]>([]);
+  const [tickets, setTickets] = React.useState<Ticket[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [submittedSearch, setSubmittedSearch] = React.useState("");
@@ -42,13 +42,20 @@ function TicketsList() {
   const [total, setTotal] = React.useState(0);
 
   const fetchData = async (searchterm: string, page: number) => {
+    let message = "";
     try {
       setLoading(true);
       const { data, total_records } = await getTicketsAll(searchterm, page);
       setTickets(data);
       setTotal(total_records);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        message = error.message;
+      } else if (typeof error === "string") {
+        message = error;
+      }
+
+      if (error) toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -56,7 +63,7 @@ function TicketsList() {
   useEffect(() => {
     fetchData(submittedSearch, page);
   }, [submittedSearch, page]);
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);

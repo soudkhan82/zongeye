@@ -7,10 +7,11 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 async function ClientDetailsPage({ params }: Props) {
+  const errMsg = "There has been an error";
   const { id } = await params;
   const response = await getlinkById(parseInt(id));
   if (!response.success) {
-    return <ErrorMessage error={response.message} />;
+    return <ErrorMessage error={errMsg} />;
   }
   const link: Client = response.data;
 

@@ -1,15 +1,12 @@
 "use client";
-import {
-  getAvgResolution,
-  getCorporateDashData,
-} from "@/app/actions/dashboard";
+import { getCorporateDashData } from "@/app/actions/dashboard";
 
 import DashboardCard from "@/components/ui/Dashboard-card";
 
 import Loader from "@/components/ui/loader";
 
 import React from "react";
-import toast from "react-hot-toast";
+
 import TicketCatChart from "./components/TicketCatChart";
 import TicketRegionChart from "./components/TicketRegionChart";
 import TicketResolution from "./components/TicketResolution";
@@ -30,16 +27,17 @@ function CorporateDashboard() {
     try {
       setLoading(true);
 
-      const response: any = await getCorporateDashData();
+      const response= await getCorporateDashData();
       if (response.success) {
         setCount(response.data);
         console.log(response.data);
       } else {
         throw new Error(response.message);
       }
-    } catch (e: any) {
-      toast.error(e.message);
-      setCount(initialtickets);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
     } finally {
       setLoading(false);
     }

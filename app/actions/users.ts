@@ -1,9 +1,14 @@
 "use server";
 
+import { JwtPayload } from "@supabase/supabase-js";
 import supabase from "../config/supabase-config";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 //Register user backend function
+
+interface MyJWTPayLoad extends JwtPayload {
+  id: string;
+}
 export const registerNewUser = async ({
   name,
   email,
@@ -15,51 +20,42 @@ export const registerNewUser = async ({
   password: string;
   role: string;
 }) => {
-  try {
-    // check of user already exists using email
-    const { data } = await supabase
-      .from("user_profiles")
-      .select("email")
-      .eq("email", email);
-    if (data && data.length > 0) {
-      return {
-        success: false,
-        message: "User already exists",
-      };
-    }
-    //hash the password using bcrpyt
-
-    const hashpassword = bcrypt.hashSync(password, 10);
-    const newUserObj = {
-      name,
-      email,
-      password: hashpassword,
-      role,
-      is_active: true,
-    };
-    // insert the new record in database
-
-    const { error: userError } = await supabase
-      .from("user_profiles")
-      .insert(newUserObj);
-    if (userError) {
-      return {
-        success: false,
-        message: userError.message,
-      };
-    }
+  // check of user already exists using email
+  const { data } = await supabase
+    .from("user_profiles")
+    .select("email")
+    .eq("email", email);
+  if (data && data.length > 0) {
     return {
-      success: true,
-      message: "User Registered Successfully",
+      success: false,
+      message: "User already exists",
     };
-  } catch (error: unknown) {
-    let message = "";
-    if (error instanceof Error) {
-      message = error.message;
-    } else if (typeof error === "string") {
-      message = error;
-    }
   }
+  //hash the password using bcrpyt
+
+  const hashpassword = bcrypt.hashSync(password, 10);
+  const newUserObj = {
+    name,
+    email,
+    password: hashpassword,
+    role,
+    is_active: true,
+  };
+  // insert the new record in database
+
+  const { error: userError } = await supabase
+    .from("user_profiles")
+    .insert(newUserObj);
+  if (userError) {
+    return {
+      success: false,
+      message: userError.message,
+    };
+  }
+  return {
+    success: true,
+    message: "User Registered Successfully",
+  };
 };
 
 export const loginuser = async ({
@@ -71,90 +67,72 @@ export const loginuser = async ({
   password: string;
   role: string;
 }) => {
-  try {
-    //find the user with email
-    const { data, error } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("email", email);
+  //find the user with email
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("*")
+    .eq("email", email);
 
-    if (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-    if (data.length === 0) {
-      return {
-        success: false,
-        message: "User not found",
-      };
-    }
-    if (data[0].role !== role) {
-      return {
-        success: false,
-        message: "Invalid role",
-      };
-    }
-
-    //positive scenarios , compare the password
-
-    const ispasswordvalid = bcrypt.compareSync(password, data[0].password);
-    if (!ispasswordvalid) {
-      return {
-        success: false,
-        message: "Invalid password",
-      };
-    }
-    //generate JWT token
-    const token = jwt.sign(
-      {
-        id: data[0].id,
-      },
-      process.env.JWT_SECRET!,
-      {
-        expiresIn: "1d",
-      }
-    );
+  if (error) {
     return {
-      success: true,
-      data: token,
+      success: false,
+      message: error.message,
     };
-  } catch (error: unknown) {
-    let message = "";
-    if (error instanceof Error) {
-      message = error.message;
-    } else if (typeof error === "string") {
-      message = error;
-    }
   }
+  if (data.length === 0) {
+    return {
+      success: false,
+      message: "User not found",
+    };
+  }
+  if (data[0].role !== role) {
+    return {
+      success: false,
+      message: "Invalid role",
+    };
+  }
+
+  //positive scenarios , compare the password
+
+  const ispasswordvalid = bcrypt.compareSync(password, data[0].password);
+  if (!ispasswordvalid) {
+    return {
+      success: false,
+      message: "Invalid password",
+    };
+  }
+  //generate JWT token
+  const token = jwt.sign(
+    {
+      id: data[0].id,
+    },
+    process.env.JWT_SECRET!,
+    {
+      expiresIn: "1d",
+    }
+  );
+  return {
+    success: true,
+    data: token,
+  };
 };
 
 export const getCurrentUser = async (token: string) => {
-  try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    const userId = decoded.id;
-    const { data, error } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("id", userId);
+  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as MyJWTPayLoad;
+  const userId = decoded.id;
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("*")
+    .eq("id", userId);
 
-    if (!data || data?.length === 0 || error) {
-      return {
-        success: false,
-        message: "User not found",
-      };
-    }
+  if (!data || data?.length === 0 || error) {
     return {
-      success: true,
-      data: data[0],
+      success: false,
+      message: "User not found",
     };
-  } catch (error: unknown) {
-    let message = "";
-    if (error instanceof Error) {
-      message = error.message;
-    } else if (typeof error === "string") {
-      message = error;
-    }
   }
+  return {
+    success: true,
+    data: data[0],
+  };
 };

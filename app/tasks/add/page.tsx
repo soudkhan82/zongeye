@@ -1,5 +1,4 @@
 import React from "react";
-import SnDForm from "../components/ActionItemForm";
 import ActionItemForm from "../components/ActionItemForm";
 
 function AddSndPage() {

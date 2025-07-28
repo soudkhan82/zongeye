@@ -7,7 +7,7 @@ import {
   Status,
   Tagged_departments,
 } from "@/constants";
-import { useRouter } from "next/navigation";
+
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,20 +27,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { createNewActionItem, editActionByid } from "@/app/actions/tasks";
-import toast from "react-hot-toast";
+
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ActionItem } from "@/interfaces";
+import toast from "react-hot-toast";
+
 interface ActionItemProps {
-  initialValues: any;
+  initialValues?: ActionItem;
   formType?: "add" | "edit";
 }
 
 function ActionItemForm({ initialValues, formType }: ActionItemProps) {
   const [loading, setLoading] = React.useState(false);
-  const router = useRouter();
 
   const formSchema = z.object({
     title: z.string(),
@@ -73,12 +74,12 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
   });
   useEffect(() => {
     if (initialValues) {
-      // form.reset(initialValues);
-      Object.keys(initialValues).forEach((key: any) => {
-        form.setValue(key, initialValues[key]);
-      });
+      form.reset(initialValues);
+      // Object.keys(initialValues).forEach((key: any) => {
+      //   form.setValue(key, initialValues[key]);
+      // });
     }
-  }, [initialValues]);
+  }, [initialValues, form]);
 
   const onTagChange = (deparment: string) => {
     try {
@@ -91,32 +92,37 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
       } else {
         form.setValue("Tagged_departments", [...prevValues, deparment]);
       }
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     let response = null;
-    let message = "";
+
     try {
       setLoading(true);
       if (formType == "add") {
         response = await createNewActionItem({
           ...values,
         });
+        if (response.success) {
+          toast.success("Successfully created");
+        }
       } else {
-        response = await editActionByid({
+        if (!initialValues) {
+          return;
+        }
+        editActionByid({
           action_id: initialValues.id,
           payload: values,
         });
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        message = error.message;
-      } else if (typeof error === "string") {
-        message = error;
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
       }
-      toast.error(message);
     } finally {
       setLoading(false);
     }

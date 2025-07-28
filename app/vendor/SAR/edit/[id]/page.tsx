@@ -9,7 +9,7 @@ interface Props {
 }
 async function EditSARPage({ params }: Props) {
   const { id } = await params;
-  const response: any = await getSiteAccessRequestById(id!);
+  const response:ApiResponse = await getSiteAccessRequestById(id!);
   if (!response.success) {
     return <ErrorMessage error={response.message} />;
   }

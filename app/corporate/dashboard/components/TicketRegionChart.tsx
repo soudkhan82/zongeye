@@ -1,7 +1,7 @@
 import { getTicketRegionCount } from "@/app/actions/dashboard";
 import React from "react";
 import { useState, useEffect } from "react";
-import toast from "react-hot-toast";
+
 import {
   PieChart,
   Pie,
@@ -31,8 +31,10 @@ function TicketRegionChart() {
       setLoading(true);
       const response = await getTicketRegionCount();
       setData(response.data);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
     } finally {
       setLoading(false);
     }

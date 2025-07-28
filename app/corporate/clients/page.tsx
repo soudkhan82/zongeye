@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Client } from "@/interfaces";
 import ErrorMessage from "@/components/ui/error-message";
-import { useRouter } from "next/navigation";
+
 const columns = ["ID", "NMS ID", "Client", "Service Type"];
 
 function CorpClientsList() {
@@ -30,7 +30,7 @@ function CorpClientsList() {
   const [total, setTotal] = useState(0);
 
   //const limit = 10;
-  const router = useRouter();
+
   const loadData = async (searchTerm: string, page: number) => {
     let message = "";
     try {

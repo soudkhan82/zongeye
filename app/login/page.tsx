@@ -43,12 +43,12 @@ function LoginPage() {
 
     try {
       setloading(true);
-      const response: any = await loginuser(values);
+      const response = await loginuser(values);
       if (response.success) {
         console.log(values);
 
         toast.success("Logged In Successfully");
-        Cookies.set("token", response.data);
+        Cookies.set("token", response.data ?? "undefined");
 
         if (values.role === "vendor") {
           router.push("/vendor/SAR");
@@ -56,8 +56,10 @@ function LoginPage() {
           router.push("/corporate/dashboard");
         }
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
     } finally {
       setloading(false);
     }
@@ -142,7 +144,7 @@ function LoginPage() {
               <div className="flex gap-22">
                 Dont have an account? <Link href="/register">Register</Link>
               </div>
-              <Button type="submit" className="ml-5">
+              <Button type="submit" className="ml-5" disabled={loading}>
                 Submit
               </Button>
             </div>

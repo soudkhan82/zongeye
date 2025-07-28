@@ -16,7 +16,8 @@ async function SARDetailPage({ params }: Props) {
   const response = await getSiteAccessRequestById(id!);
   const sarItem: SiteAccessRequest = response.data;
   if (!response.success) {
-    return <ErrorMessage error={response.message} />;
+    const error = "There has been an error";
+    return <ErrorMessage error={error} />;
   }
   console.log(response.data);
   return (

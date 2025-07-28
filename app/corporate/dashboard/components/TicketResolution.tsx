@@ -1,6 +1,5 @@
 import { getAvgResolution } from "@/app/actions/dashboard";
 import React, { useEffect } from "react";
-import toast from "react-hot-toast";
 
 interface TicketResolutionData {
   Issue_Type: string;
@@ -16,8 +15,10 @@ function TicketResolution() {
       const response = await getAvgResolution();
       setData(response.data);
       console.log(response.data);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
     } finally {
       setLoading(false);
     }

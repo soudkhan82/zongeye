@@ -14,7 +14,7 @@ import { getCurrentUser } from "@/app/actions/users";
 function PrivateLayout({ children }: { children: React.ReactNode }) {
   const { user, setUser } = usersGlobalStore() as IUsersGlobalStore;
   const [loading, setloading] = React.useState(false);
-  const [error, setError] = React.useState(false);
+  const [error, setError] = React.useState<string | undefined>(undefined);
   const router = useRouter();
   const fetchUser = async () => {
     try {

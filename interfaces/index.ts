@@ -26,7 +26,7 @@ export interface Ticket {
   Complaint_Time: string;
   Customer_Intimation_Time: string;
   Resolution_Time: string;
-  Resolution_duration: string;
+  Resolution_duration: number;
   Issue_end: string;
   RCA: string;
   Reason: string;

@@ -1,7 +1,9 @@
 "use server";
 import { Ticket } from "@/interfaces";
 import supabase from "../config/supabase-config";
+import { complaintPayload } from "./types";
 const PAGE_SIZE = 5;
+
 export const getTicketsbyClient = async (client: string) => {
   const { data, error } = await supabase
     .from("complaints")
@@ -14,7 +16,7 @@ export const getTicketsbyClient = async (client: string) => {
   };
 };
 
-export const createNewTicket = async (payload: any) => {
+export const createNewTicket = async (payload: complaintPayload) => {
   const { error } = await supabase.from("complaints").insert(payload);
 
   if (error) throw error;
@@ -63,6 +65,10 @@ export const getTicketById = async (id: number) => {
     } else if (typeof error === "string") {
       message = error;
     }
+    return {
+      success: false,
+      message: message,
+    };
   }
 };
 
@@ -71,7 +77,7 @@ export const editTicketByid = async ({
   payload,
 }: {
   ticket_id: number;
-  payload: Ticket;
+  payload: complaintPayload;
 }) => {
   const { error } = await supabase
     .from("complaints")
@@ -96,7 +102,7 @@ export const editTicketByid = async ({
 
 export const deleteTicketByid = async (ticketid: number) => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("tickets")
       .delete()
       .eq("id", ticketid);
@@ -112,5 +118,9 @@ export const deleteTicketByid = async (ticketid: number) => {
     } else if (typeof error === "string") {
       message = error;
     }
+    return {
+      success: false,
+      message: message,
+    };
   }
 };

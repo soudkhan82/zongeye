@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Ticket } from "@/interfaces";
+
 import {
   Form,
   FormControl,
@@ -38,9 +38,10 @@ import {
   ServiceType,
   Status,
 } from "@/constants";
+import { Ticket } from "@/interfaces";
 
 interface TicketFormProps {
-  initialValues: any;
+  initialValues?: Ticket;
   formType?: "add" | "edit";
 }
 
@@ -99,63 +100,55 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
   const serviceType = form.watch("Service_Type");
   const region = form.watch("Acc_Region");
 
-  const fetchLinksData = async () => {
-    let message = "";
-    try {
-      setLoading(true);
-      const linksData = await getTicketFormLinks(serviceType, region);
-      // console.log(linksData);
-      if (Array.isArray(linksData)) {
-        const cleanedData = linksData.map((item) => ({
-          id: Number(item.id),
-          NMS_USER_LABEL: String(item.NMS_USER_LABEL),
-        }));
-        setLinks(cleanedData);
-        console.log(cleanedData);
-      }
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        message = e.message;
-      } else if (typeof e === "string") {
-        message = e;
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchClientsData = async () => {
-    let message = "";
-    try {
-      setLoading(true);
-      const ClientData = await getTicketFormClients(serviceType, region);
-
-      if (Array.isArray(ClientData)) {
-        const cleanedData = ClientData.map((item) => ({
-          id: Number(item.id),
-          Client: String(item.Client),
-        }));
-        setClients(cleanedData);
-        console.log(cleanedData);
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        message = err.message;
-      } else if (typeof err === "string") {
-        message = err;
-      }
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
   useEffect(() => {
-    fetchLinksData();
+    const fetchClientsData = async () => {
+      try {
+        setLoading(true);
+        const ClientData = await getTicketFormClients(serviceType, region);
+
+        if (Array.isArray(ClientData)) {
+          const cleanedData = ClientData.map((item) => ({
+            id: Number(item.id),
+            Client: String(item.Client),
+          }));
+          setClients(cleanedData);
+          console.log(cleanedData);
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          return { success: false as const, message: err.message };
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    const fetchLinksData = async () => {
+      try {
+        setLoading(true);
+        const linksData = await getTicketFormLinks(serviceType, region);
+        // console.log(linksData);
+        if (Array.isArray(linksData)) {
+          const cleanedData = linksData.map((item) => ({
+            id: Number(item.id),
+            NMS_USER_LABEL: String(item.NMS_USER_LABEL),
+          }));
+          setLinks(cleanedData);
+          console.log(cleanedData);
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          return { success: false as const, message: err.message };
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchClientsData();
+    fetchLinksData();
   }, [serviceType, region]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    let message = "";
     let response = null;
     const start_time = new Date(values.Complaint_Time);
     const end_time = new Date(values.Resolution_Time);
@@ -171,7 +164,7 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
         });
       } else {
         response = await editTicketByid({
-          ticket_id: initialValues.id,
+          ticket_id: initialValues?.id ?? 0,
           payload: { ...values, Resolution_duration: resolution_mins },
         });
       }
@@ -181,10 +174,6 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
       } else {
         toast.error(response.message);
       }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        message = err.message;
-      } else if (typeof err === "string") toast.error(err);
     } finally {
       setLoading(false);
     }
@@ -192,12 +181,9 @@ function TicketForm({ initialValues, formType }: TicketFormProps) {
 
   useEffect(() => {
     if (initialValues) {
-      // Object.keys(initialValues).forEach((key: any) => {
-      //   form.setValue(key, initialValues[key]);
-      // });
       form.reset(initialValues);
     }
-  }, [initialValues]);
+  }, [initialValues, form]);
   return (
     <div className="w-full p-3 mt-2">
       <div className="mt-3"></div>

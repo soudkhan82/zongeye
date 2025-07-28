@@ -1,8 +1,9 @@
 "use server";
 import { ActionItem } from "@/interfaces";
 import supabase from "../config/supabase-config";
+import { ActionItemPayload } from "./types";
 const PAGE_SIZE = 5;
-export const createNewActionItem = async (payload: any) => {
+export const createNewActionItem = async (payload: ActionItemPayload) => {
   const { error } = await supabase.from("actions").insert(payload);
 
   if (error) throw error;
@@ -13,56 +14,35 @@ export const createNewActionItem = async (payload: any) => {
 };
 
 export const getActionById = async (id: number) => {
-  try {
-    const { data, error } = await supabase
-      .from("actions")
-      .select("*")
-      .eq("id", id);
-    if (error || data.length === 0)
-      throw error || new Error("Ticket not Found");
-    return {
-      success: true,
-      data: data[0],
-    };
-  } catch (error: unknown) {
-    let message = "";
-    if (error instanceof Error) {
-      message = error.message;
-    } else if (typeof error === "string") {
-      message = error;
-    }
-  }
+  const { data, error } = await supabase
+    .from("actions")
+    .select("*")
+    .eq("id", id);
+  if (error || data.length === 0) throw error || new Error("Ticket not Found");
+  return {
+    success: true,
+    data: data[0],
+    message: "Successful",
+  };
 };
+
 export const editActionByid = async ({
   action_id,
   payload,
 }: {
   action_id: number;
-  payload: any;
+  payload: ActionItemPayload;
 }) => {
-  try {
-    const { error } = await supabase
-      .from("actions")
-      .update(payload)
-      .eq("id", action_id);
+  const { error } = await supabase
+    .from("actions")
+    .update(payload)
+    .eq("id", action_id);
 
-    if (error) throw error;
-    return {
-      success: true,
-      message: "Ticket updated successfully",
-    };
-  } catch (error: any) {
-    return {
-      success: true,
-      message: error.message,
-    };
-    let message = "";
-    if (error instanceof Error) {
-      message = error.message;
-    } else if (typeof error === "string") {
-      message = error;
-    }
-  }
+  if (error) throw error;
+  return {
+    success: true,
+    message: "Ticket updated successfully",
+  };
 };
 
 export const getActionsAll = async (

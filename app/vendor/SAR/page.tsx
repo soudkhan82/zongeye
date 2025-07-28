@@ -38,6 +38,7 @@ function SiteAccessRequestsList() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const fetchData = async (searterm: string, page: number) => {
+    let message = "";
     try {
       setLoading(true);
       const { data, total_records } = await getSiteAccessRequestAll(
@@ -46,8 +47,14 @@ function SiteAccessRequestsList() {
       );
       setRequests(data);
       setTotal(total_records);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        message = error.message;
+      } else if (typeof error === "string") {
+        message = error;
+      }
+
+      if (error) toast.error(message);
     } finally {
       setLoading(false);
     }

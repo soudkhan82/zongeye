@@ -16,7 +16,7 @@ interface Props {
 
 async function TaskDetailsPage({ params }: Props) {
   const { id } = await params;
-  const response: any = await getActionById(id!);
+  const response: ApiResponse = await getActionById(id!);
   const actionitem: ActionItem = response.data;
 
   if (!response.success) {

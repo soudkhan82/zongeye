@@ -1,42 +1,29 @@
 "use server";
 import { SiteAccessRequest } from "@/interfaces";
 import supabase from "../config/supabase-config";
+import { SARItemPayload } from "./types";
 
 const PAGE_SIZE = 5;
 
-export const createNewSiteAccessRequest = async (payload: any) => {
-  try {
-    const { error } = await supabase.from("sar").insert(payload);
-    if (error) throw error;
+export const createNewSiteAccessRequest = async (payload: SARItemPayload) => {
+  const { error } = await supabase.from("sar").insert(payload);
+  if (error) throw error;
 
-    return {
-      success: true,
-      message: "Request Successfully submitted",
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
-  }
+  return {
+    success: true,
+    message: "Request Successfully submitted",
+  };
 };
 
 export const getSiteAccessRequestById = async (id: number) => {
-  try {
-    const { data, error } = await supabase.from("sar").select("*").eq("id", id);
+  const { data, error } = await supabase.from("sar").select("*").eq("id", id);
 
-    if (error || data.length === 0)
-      throw error || new Error("Request not found");
-    return {
-      success: true,
-      data: data[0],
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
-  }
+  if (error || data.length === 0) throw error || new Error("Request not found");
+  return {
+    success: true,
+    data: data[0],
+    message: "successful",
+  };
 };
 
 export const editSARById = async ({
@@ -44,24 +31,17 @@ export const editSARById = async ({
   payload,
 }: {
   request_id: number;
-  payload: any;
+  payload: SARItemPayload;
 }) => {
-  try {
-    const { data, error } = await supabase
-      .from("sar")
-      .update(payload)
-      .eq("id", request_id);
-    if (error) throw error;
-    return {
-      success: true,
-      message: "Request updated successfully",
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message,
-    };
-  }
+  const { error } = await supabase
+    .from("sar")
+    .update(payload)
+    .eq("id", request_id);
+  if (error) throw error;
+  return {
+    success: true,
+    message: "Request updated successfully",
+  };
 };
 
 export const getSiteAccessRequestAll = async (

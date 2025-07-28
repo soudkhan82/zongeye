@@ -43,14 +43,17 @@ function RegisterPage() {
     try {
       setLoading(true);
       const response = await registerNewUser(values);
-      if (response.success) {
+      if (response?.success) {
         toast.success("account created successfully");
         router.push("/login");
       } else {
-        toast.error(response.message);
+        toast.error("The user was not registered");
+        router.push("/register");
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
     } finally {
       setLoading(false);
     }

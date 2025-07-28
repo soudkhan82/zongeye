@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Acc_Region, Approval_Status, SAFScope } from "@/constants";
+import { SiteAccessRequest } from "@/interfaces";
 import usersGlobalStore, {
   IUsersGlobalStore,
 } from "@/store/users-global-store";
@@ -30,7 +31,7 @@ import toast from "react-hot-toast";
 import z from "zod";
 
 interface SAFProps {
-  initialValues?: any;
+  initialValues?: SiteAccessRequest;
   formType?: "add" | "edit";
 }
 function SAForm({ initialValues, formType }: SAFProps) {
@@ -46,7 +47,7 @@ function SAForm({ initialValues, formType }: SAFProps) {
     approvedBy: z.string(),
     Approver_comments: z.string(),
     visitorName: z.string(),
-    visitorCNIC: z.string().min(1, "Required"),
+    visitorCNIC: z.number(),
     approval_status: z.string(),
     region: z.string(),
   });
@@ -62,7 +63,7 @@ function SAForm({ initialValues, formType }: SAFProps) {
 
       Approver_comments: "",
       visitorName: "",
-      visitorCNIC: "",
+      visitorCNIC: 0,
       approval_status: "Submitting",
       region: "",
     },
@@ -70,11 +71,12 @@ function SAForm({ initialValues, formType }: SAFProps) {
 
   useEffect(() => {
     if (initialValues) {
-      Object.keys(initialValues).forEach((key: any) => {
-        form.setValue(key, initialValues[key]);
-      });
+      form.reset(initialValues);
+      // Object.keys(initialValues).forEach((key: any) => {
+      //   form.setValue(key, initialValues[key]);
+      // });
     }
-  }, [initialValues]);
+  }, [initialValues, form]);
 
   const onScopeChange = (scope: string) => {
     try {
@@ -87,8 +89,10 @@ function SAForm({ initialValues, formType }: SAFProps) {
       } else {
         form.setValue("scope", [...prevValues, scope]);
       }
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
     }
   };
 
@@ -103,12 +107,18 @@ function SAForm({ initialValues, formType }: SAFProps) {
           ...values,
         });
       } else {
+        if (!initialValues) {
+          return;
+        }
         if (approval_status === "Approved") {
           response = await editSARById({
             request_id: initialValues.id,
-            payload: { ...values, approvedBy: user?.name },
+            payload: { ...values, approvedBy: user?.name ?? "" },
           });
         } else {
+          if (!initialValues) {
+            return;
+          }
           response = await editSARById({
             request_id: initialValues.id,
             payload: { ...values },
@@ -121,8 +131,10 @@ function SAForm({ initialValues, formType }: SAFProps) {
       } else {
         toast.error(response.message);
       }
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
     } finally {
       setLoading(false);
     }
