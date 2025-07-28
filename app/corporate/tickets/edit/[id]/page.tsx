@@ -1,3 +1,4 @@
+"use client";
 import PageTitle from "@/components/ui/page-title";
 import React from "react";
 import TicketForm from "../../components/ticketForm";
