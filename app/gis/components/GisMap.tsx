@@ -13,7 +13,7 @@ export default function GISMap({ points, center }: Props) {
     <MapContainer
       center={center}
       zoom={6}
-      style={{ height: "95%", width: "75%" }}
+      style={{ height: "95%", width: "95%" }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
