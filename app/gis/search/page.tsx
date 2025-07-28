@@ -35,7 +35,11 @@ function GISMapList() {
   const [submittedsearch, setSubmittedSearch] = useState("");
   const [submittedAreasearch, setSubmittedAreaSearch] = useState("");
   const router = useRouter();
-  const fetchData = async (searchterm: string, page: number) => {
+  const fetchData = async (
+    searchterm: string,
+    searchArea: string,
+    page: number
+  ) => {
     try {
       setLoading(true);
       const { data, total_records } = await getAllpoints(
@@ -59,8 +63,8 @@ function GISMapList() {
       ? [points[0].Latitude, points[0].Longitude]
       : [33.6844, 73.0479]; // Default center (Islamabad)
   useEffect(() => {
-    fetchData(submittedsearch, page);
-  }, [submittedsearch, submittedAreasearch, page, searchArea]);
+    fetchData(submittedsearch, submittedAreasearch, page);
+  }, [submittedsearch, submittedAreasearch, page]);
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
