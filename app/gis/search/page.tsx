@@ -153,6 +153,9 @@ function GISMapList() {
               <p>Total Records are {total} </p>
             </div>
           </div>
+          <div className="flex-1 overflow-y-auto bg-gray-50">
+            <GISMap points={points} center={center} />
+          </div>
         </div>
       )}
       {!loading && points.length === 0 && (
@@ -161,8 +164,6 @@ function GISMapList() {
         </div>
       )}
       <PageTitle title="Geographical Information" />
-
-      <GISMap points={points} center={center} />
     </div>
   );
 }
