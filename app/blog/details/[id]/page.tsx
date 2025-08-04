@@ -1,3 +1,4 @@
+"use client";
 import { useParams } from "next/navigation";
 import { getPostById } from "@/app/actions/blog";
 import { BlogPost } from "@/interfaces";
