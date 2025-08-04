@@ -1,16 +1,15 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getPostById } from "@/app/actions/blog";
+import { BlogPost } from "@/interfaces";
 
-export default function BlogPostDetail() {
+async function BlogPostDetail() {
   const { id } = useParams() as { id: string };
-  const [post, setPost] = useState<any>(null);
+  const response = await getPostById(id!);
+  const post: BlogPost = response.data;
 
-  useEffect(() => {
-    getPostById(id).then(({ data }) => setPost(data));
-  }, [id]);
+  // useEffect(() => {
+  //   getPostById(id).then(({ data }) => setPost(data));
+  // }, [id]);
 
   if (!post) return <p className="text-center mt-10">Loading...</p>;
 
@@ -31,3 +30,5 @@ export default function BlogPostDetail() {
     </div>
   );
 }
+
+export default BlogPostDetail;

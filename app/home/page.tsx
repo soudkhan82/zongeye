@@ -1,17 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import usersGlobalStore, {
-  IUsersGlobalStore,
-} from "@/store/users-global-store";
+
 import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "../actions/users";
 
 export default function HomePge() {
-  const { user } = usersGlobalStore() as IUsersGlobalStore;
-  const [loading, setLoading] = useState(false);
-
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center bg-gray-200 py-5 px-20">

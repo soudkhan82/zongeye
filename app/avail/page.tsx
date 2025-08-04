@@ -17,12 +17,10 @@ async function AvailabilityList() {
   try {
     data = await getAvailAll();
     console.log(data);
-  } catch (error: any) {
+  } catch (error) {
     return (
       <div className="p-6">
-        <p className="text-red-600 font-semibold">
-          Failed to Load:{error.message}
-        </p>
+        <p className="text-red-600 font-semibold">Failed to Load</p>
       </div>
     );
   }

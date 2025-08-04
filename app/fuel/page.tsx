@@ -13,7 +13,6 @@ import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import Loader from "@/components/ui/loader";
-import { Button } from "@/components/ui/button";
 function FuelList() {
   const [data, setData] = useState<FuelModel[]>([]);
   const [loading, setLoading] = useState(false);

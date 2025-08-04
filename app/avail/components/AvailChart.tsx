@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { fetchAvailperMonth, getAvailAll } from "@/app/actions/avail";
+import { fetchAvailperMonth } from "@/app/actions/avail";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -20,15 +20,15 @@ type AvailabilityData = {
 
 export default function AvailabilityChart() {
   const [chartData, setChartData] = useState<AvailabilityData[]>([]);
-  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const loadData = async () => {
       try {
         const data = await fetchAvailperMonth();
         setChartData(data);
         console.log(data);
-      } catch (error: any) {
-        toast.error(`The error is ${error.message}`);
+      } catch (error) {
+        toast.error(`Error fetching`);
       }
     };
 
