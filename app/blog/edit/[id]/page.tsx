@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import { getPostById } from "@/app/actions/blog";
 import { BlogPost } from "@/interfaces";
 
