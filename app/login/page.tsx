@@ -53,7 +53,7 @@ function LoginPage() {
         if (values.role === "vendor") {
           router.push("/vendor/SAR");
         } else {
-          router.push("/corporate/dashboard");
+          router.push("/home");
         }
       }
     } catch (err: unknown) {

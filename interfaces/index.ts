@@ -76,6 +76,15 @@ export interface Client {
   WO: string;
   BW_Slab: string;
 }
+
+export interface BlogPost {
+  id: number;
+  title: string;
+  description: string;
+  image?: string;
+  impact: string | undefined;
+  created_at?: string;
+}
 export interface ActionItem {
   id: number;
   status: string;
@@ -89,6 +98,15 @@ export interface ActionItem {
   Remarks: string;
   ActionType: string;
   description: string;
+}
+
+export interface FuelModel {
+  id: number;
+  name: string;
+  quantity: number;
+  district: string;
+  subregion: string;
+  timeline: Date;
 }
 export interface SiteAccessRequest {
   id: number;
@@ -113,4 +131,14 @@ export interface GeoPoint {
   SiteClassification: string;
   District: string;
   Address: string;
+}
+
+export interface Availability {
+  id: number;
+  month: string;
+  SITE_ID: string;
+  SubRegion: string;
+  Region: string;
+  CAT: string;
+  Availability: number;
 }

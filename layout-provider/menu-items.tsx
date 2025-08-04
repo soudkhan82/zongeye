@@ -67,6 +67,11 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
       icon: <SquareCheckBig size={14} />,
     },
     {
+      title: "Network Achievements",
+      route: "/blog",
+      icon: <MailSearch size={14} />,
+    },
+    {
       title: "Site Access Requests",
       route: "/vendor/SAR",
       icon: <MailSearch size={14} />,

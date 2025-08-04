@@ -1,93 +1,160 @@
+"use client";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { loginuser } from "./actions/users";
+import toast from "react-hot-toast";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import Link from "next/link";
+function LandingPage() {
+  const [loading, setloading] = React.useState(false);
+  const router = useRouter();
+  const formSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    role: z.enum(["user", "admin", "vendor"]),
+  });
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      role: "vendor",
+    },
+  });
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
 
-export default function HomePge() {
+    try {
+      setloading(true);
+      const response = await loginuser(values);
+      if (response.success) {
+        console.log(values);
+
+        toast.success("Logged In Successfully");
+        Cookies.set("token", response.data ?? "undefined");
+
+        if (values.role === "vendor") {
+          router.push("/vendor/SAR");
+        } else {
+          router.push("/home");
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { success: false as const, message: err.message };
+      }
+    } finally {
+      setloading(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col">
-      <div className="flex justify-between items-center bg-gray-200 py-5 px-20">
-        {/* <div >
-          <Image
-          src="/data.png"
-          alt="Data"
-          fill
-          className="object-cover rounded-2xl shadow-lg"
-          priority
-        />
-        </div> */}
-        <h1 className="text-3xl font-bold text-green-400 [text-shadow:_0_0_10px_rgb(34_197_94)]">
-          Zong <span className="text-white">EYE</span>
-        </h1>
+    <div>
+      <div className="text-3xl flex justify-center">Welcome to Zong EYE</div>
+      <div className="auth-bg">
+        <div className="bg-white p-5 rounded-sm-w-[400px]">
+          <h1 className="font-bold">Login to your acount</h1>
 
-        <Button>
-          <Link href="/login">Login</Link>
-        </Button>
-      </div>
-      <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-900">
-        {/* Hero Section */}
-        <div className="container mx-auto px-4 py-16 flex flex-col md:flex-row items-center gap-10">
-          {/* Text Content */}
-          <div className="flex-1 text-center md:text-left space-y-6">
-            <h1 className="text-5xl font-bold leading-tight">
-              Transforming projects through
-              <span className="text-blue-600">Technology</span>
-            </h1>
-            <p className="text-lg text-gray-600 max-w-xl">
-              See your data. Know your business. Act with confidence
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg">
-                Get Started
-              </Button>
-              <Button
-                variant="outline"
-                className="px-6 py-3 rounded-lg text-lg"
-              >
-                Learn More
-              </Button>
-            </div>
-          </div>
-
-          {/* Hero Image */}
-          <div className="flex-1 relative h-90 w-full">
-            <Image
-              src="/telecom.png"
-              alt="Telecom Illustration"
-              fill
-              className="object-cover rounded-2xl shadow-lg"
-              priority
-            />
-          </div>
-        </div>
-
-        {/* Features Section */}
-        <section className="container mx-auto px-4 py-12 grid md:grid-cols-3 gap-8 text-center">
-          {[
-            {
-              title: "Geographical Information System",
-              desc: "Blazing fast with Server Side Rendering (SSR).",
-            },
-            {
-              title: "Intuitive Visualizations",
-              desc: "World-class contemporary UI Visuals with interactive controls",
-            },
-            {
-              title: "Smart Partner Access",
-              desc: "Automated Outsource Management System",
-            },
-          ].map((feature, index) => (
-            <div
-              key={index}
-              className="p-6 bg-white rounded-xl shadow hover:shadow-lg transition-shadow"
+          <hr className="my-7 border-gray-300"></hr>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-8 mt-5"
             >
-              <h3 className="text-xl font-semibold mb-3 text-blue-600">
-                {feature.title}
-              </h3>
-              <p className="text-gray-600">{feature.desc}</p>
-            </div>
-          ))}
-        </section>
-      </main>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="" {...field} />
+                    </FormControl>
+                    <FormDescription>Enter your Email</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="" {...field} type="password" />
+                    </FormControl>
+                    <FormDescription>Enter your password</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Role</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex space-x-10"
+                      >
+                        <FormItem className="flex items-center gap-3">
+                          <FormControl>
+                            <RadioGroupItem value="vendor" />
+                          </FormControl>
+                          <FormLabel className="font-normal">vendor</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center gap-3">
+                          <FormControl>
+                            <RadioGroupItem value="user" />
+                          </FormControl>
+                          <FormLabel className="font-normal">User</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center gap-3">
+                          <FormControl>
+                            <RadioGroupItem value="admin" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Admin</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-between items-center">
+                <div className="flex gap-22">
+                  Dont have an account? <Link href="/register">Register</Link>
+                </div>
+                <Button type="submit" className="ml-5" disabled={loading}>
+                  Submit
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </div>
     </div>
   );
 }
+
+export default LandingPage;

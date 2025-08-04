@@ -67,6 +67,7 @@ export const ActionType = [
   { value: "MOAM", label: "MOAM" },
   { value: "S&D", label: "S&D" },
   { value: "CTO", label: "CTO" },
+  { value: "NP", label: "NP" },
   { value: "Internal_Audit", label: "Internal_Audit" },
   { value: "Compliance", label: "Compliance" },
 ];

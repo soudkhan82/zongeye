@@ -9,7 +9,9 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
   const isPrivate =
     pathname.startsWith("/corporate") ||
     pathname.startsWith("/task") ||
-    pathname.startsWith("/vendor");
+    pathname.startsWith("/vendor") ||
+    pathname.startsWith("/home") ||
+    pathname.startsWith("/blog");
 
   if (isPrivate) {
     return <PrivateLayout>{children}</PrivateLayout>;
