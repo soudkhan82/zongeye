@@ -75,7 +75,7 @@ export async function getPosts() {
   return { data, error };
 }
 
-export async function getPostById(id: string) {
+export async function getPostById(id:number) {
   const { data, error } = await supabase
     .from("posts")
     .select("*")

@@ -28,7 +28,7 @@ export default function AvailabilityChart() {
         setChartData(data);
         console.log(data);
       } catch (error) {
-        toast.error(`Error fetching`);
+        toast.error(`Error fetching ${error}`);
       }
     };
 

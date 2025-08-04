@@ -20,7 +20,9 @@ async function AvailabilityList() {
   } catch (error) {
     return (
       <div className="p-6">
-        <p className="text-red-600 font-semibold">Failed to Load</p>
+        <p className="text-red-600 font-semibold">
+          {`Failed to Load ${error}`}{" "}
+        </p>
       </div>
     );
   }

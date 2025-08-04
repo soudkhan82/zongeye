@@ -1,11 +1,12 @@
-"use client";
-import { useParams } from "next/navigation";
 import { getPostById } from "@/app/actions/blog";
 import { BlogPost } from "@/interfaces";
 
-async function BlogPostDetail() {
-  const { id } = useParams() as { id: string };
-  const response = await getPostById(id!);
+interface Props {
+  params: Promise<{ id: number }>;
+}
+async function BlogPostDetail({ params }: Props) {
+  const { id } = await params;
+  const response = await getPostById(id);
   const post: BlogPost = response.data;
 
   // useEffect(() => {

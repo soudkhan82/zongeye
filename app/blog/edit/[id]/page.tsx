@@ -1,20 +1,19 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 
 import { getPostById } from "@/app/actions/blog";
 import { BlogPost } from "@/interfaces";
 
-export default function EditPostPage() {
-  const { id } = useParams() as { id: string };
-  const [post, setPost] = useState<BlogPost | null>(null);
-
-  useEffect(() => {
-    getPostById(id).then(({ data }) => setPost(data));
-  }, [id]);
+interface Props {
+  params: Promise<{ id: number }>;
+}
+async function EditPostPage({ params }: Props) {
+  const { id } = await params;
+  const response = await getPostById(id);
+  const post: BlogPost = response.data;
 
   if (!post) return <p>Loading...</p>;
 
   return <div className="max-w-xl mx-auto mt-10"></div>;
 }
+
+export default EditPostPage;
