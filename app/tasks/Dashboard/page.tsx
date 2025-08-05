@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import PageTitle from "@/components/ui/page-title";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 export default function ActionsDashboard() {
