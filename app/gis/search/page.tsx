@@ -23,7 +23,7 @@ import Link from "next/link";
 import { Edit2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ErrorMessage from "@/components/ui/error-message";
-const columns = ["Name", "SiteClassification", "District", "Address", "Edit"];
+const columns = ["Name", "SiteClassification", "District", "Edit"];
 
 function GISMapList() {
   const [points, setPoints] = useState<GeoPoint[]>([]);
@@ -97,8 +97,8 @@ function GISMapList() {
       </form>
       {loading && <Loader />}
       {!loading && points.length > 0 && (
-        <div className="flex gap-4 p-12">
-          <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex gap-2 p-1">
+          <div className=" flex-1 overflow-y-auto bg-gray-100 max-w-[500px]">
             <Table>
               <TableHeader className=" bg-pink-300">
                 <TableRow>
@@ -121,7 +121,6 @@ function GISMapList() {
 
                     <TableCell>{point.SiteClassification}</TableCell>
                     <TableCell>{point.District}</TableCell>
-                    <TableCell>{point.Address}</TableCell>
 
                     <TableCell
                       data-label="actions"
@@ -157,7 +156,7 @@ function GISMapList() {
               <p>Total Records are {total} </p>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto bg-gray-50">
+          <div className=" max-w-2xl flex-1 overflow-x-auto bg-gray-100">
             <GISMap points={points} center={center} />
           </div>
         </div>

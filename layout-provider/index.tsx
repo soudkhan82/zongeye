@@ -3,6 +3,7 @@ import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import PrivateLayout from "./PrivateLayout";
 import PublicLayout from "./PublicLayout";
+import path from "path";
 
 function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -11,7 +12,8 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/task") ||
     pathname.startsWith("/vendor") ||
     pathname.startsWith("/home") ||
-    pathname.startsWith("/blog");
+    pathname.startsWith("/blog") ||
+    pathname.startsWith("/gis");
 
   if (isPrivate) {
     return <PrivateLayout>{children}</PrivateLayout>;

@@ -85,6 +85,21 @@ export interface BlogPost {
   impact: string | undefined;
   created_at?: string;
 }
+
+export type RegionCount = {
+  region: string;
+  count: number;
+};
+
+export type ActionTypeCount = {
+  action_type: string;
+  count: number;
+};
+
+export type StatusCount = {
+  status: string;
+  count: number;
+};
 export interface ActionItem {
   id: number;
   status: string;
@@ -95,9 +110,9 @@ export interface ActionItem {
   target_timeline: string;
   Tagged_departments: string[];
   lead_department: string;
-  Remarks: string;
   ActionType: string;
   description: string;
+  created_at:string;
 }
 
 export interface FuelModel {

@@ -38,7 +38,7 @@ export async function createPost(
 }
 
 export async function updatePost(
-  id: string,
+  id: number,
   post: BlogInput,
   file?: File | null
 ): Promise<{ error: Error | null }> {
@@ -75,7 +75,7 @@ export async function getPosts() {
   return { data, error };
 }
 
-export async function getPostById(id:number) {
+export async function getPostById(id: number) {
   const { data, error } = await supabase
     .from("posts")
     .select("*")

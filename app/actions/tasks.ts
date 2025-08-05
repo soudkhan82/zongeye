@@ -1,5 +1,10 @@
 "use server";
-import { ActionItem } from "@/interfaces";
+import {
+  ActionItem,
+  ActionTypeCount,
+  RegionCount,
+  StatusCount,
+} from "@/interfaces";
 import supabase from "../config/supabase-config";
 import { ActionItemPayload } from "./types";
 const PAGE_SIZE = 5;
@@ -54,7 +59,8 @@ export const getActionsAll = async (
   let query = supabase
     .from("actions")
     .select("*", { count: "exact" })
-    .order("target_timeline", { ascending: true })
+    .neq("status", "Closed")
+    .order("created_at", { ascending: false })
     .range(from, to);
 
   if (searchterm) {
@@ -64,3 +70,61 @@ export const getActionsAll = async (
   if (error || data.length === 0) throw error || new Error("No Records");
   return { data: data, total_records: count! };
 };
+
+export async function getActionsByRegion(): Promise<RegionCount[] | null> {
+  const { data, error } = await supabase.rpc("group_actions_by_region");
+
+  if (error) {
+    console.error("❌ Failed to fetch grouped actions:", error);
+    return null;
+  }
+  if (!Array.isArray(data)) {
+    console.error("⚠️ RPC result is not an array:", data);
+    return null;
+  }
+  return data;
+}
+
+export async function getActionsByType(): Promise<ActionTypeCount[] | null> {
+  const { data, error } = await supabase.rpc("grouped_actions_by_type");
+
+  if (error) {
+    console.error("❌ Failed to fetch grouped actions:", error);
+    return null;
+  }
+  if (!Array.isArray(data)) {
+    console.error("⚠️ RPC result is not an array:", data);
+    return null;
+  }
+  return data;
+}
+
+export async function getActionsByStatus(): Promise<StatusCount[] | null> {
+  const { data, error } = await supabase.rpc("grouped_actions_by_status");
+
+  if (error) {
+    console.error("❌ RPC error:", error);
+    return null;
+  }
+
+  if (!Array.isArray(data)) {
+    console.error("⚠️ RPC result is not an array:", data);
+    return null;
+  }
+
+  return data;
+}
+
+export async function getAllActions(): Promise<ActionItem[] | null> {
+  const { data, error } = await supabase
+    .from("actions")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("❌ Failed to fetch actions:", error);
+    return null;
+  }
+
+  return data;
+}

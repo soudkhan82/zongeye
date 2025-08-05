@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Acc_Region,
   ActionType,
@@ -42,7 +43,7 @@ interface ActionItemProps {
 
 function ActionItemForm({ initialValues, formType }: ActionItemProps) {
   const [loading, setLoading] = React.useState(false);
-
+  const router = useRouter();
   const formSchema = z.object({
     title: z.string(),
     status: z.string(),
@@ -51,7 +52,6 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
     target_timeline: z.string(),
     Tagged_departments: z.array(z.string()).min(1, "At least one department"),
     lead_department: z.string(),
-    Remarks: z.string(),
     ActionType: z.string(),
     region: z.string(),
     description: z.string(),
@@ -66,7 +66,6 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
       target_timeline: "",
       Tagged_departments: [],
       lead_department: "",
-      Remarks: "",
       ActionType: "",
       region: "",
       status: "",
@@ -100,7 +99,7 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     let response = null;
-
+    console.log(values);
     try {
       setLoading(true);
       if (formType == "add") {
@@ -109,15 +108,20 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
         });
         if (response.success) {
           toast.success("Successfully created");
+          router.push("/tasks");
         }
       } else {
         if (!initialValues) {
           return;
         }
-        editActionByid({
+        response = editActionByid({
           action_id: initialValues.id,
           payload: values,
         });
+        if ((await response).success) {
+          toast.success((await response).message);
+          router.push("/tasks");
+        }
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

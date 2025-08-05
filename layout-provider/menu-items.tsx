@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import {
   ChartPie,
   MailSearch,
+  Map,
   MapPinHouseIcon,
   SquareCheckBig,
 } from "lucide-react";
@@ -41,26 +42,26 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
   };
   const pathname = usePathname();
   let MenuItems = [
+    // {
+    //   title: "Corporate Dashboard",
+    //   route: "/corporate/dashboard",
+    //   icon: <ChartPie size={14} />,
+    // },
     {
-      title: "Corporate Dashboard",
-      route: "/corporate/dashboard",
-      icon: <ChartPie size={14} />,
+      title: "Geographical Information Sys",
+      route: "/gis/search",
+      icon: <Map size={14} />,
     },
-    {
-      title: "Corporate Tickets",
-      route: "/corporate/tickets",
-      icon: <SquareCheckBig size={14} />,
-    },
-    {
-      title: "Add Ticket",
-      route: "/corporate/tickets/add",
-      icon: <MapPinHouseIcon size={14} />,
-    },
-    {
-      title: "Corporate Clients",
-      route: "/corporate/clients",
-      icon: <MapPinHouseIcon size={14} />,
-    },
+    // {
+    //   title: "Add Ticket",
+    //   route: "/corporate/tickets/add",
+    //   icon: <MapPinHouseIcon size={14} />,
+    // },
+    // {
+    //   title: "Corporate Clients",
+    //   route: "/corporate/clients",
+    //   icon: <MapPinHouseIcon size={14} />,
+    // },
     {
       title: "Action Items",
       route: "/tasks",

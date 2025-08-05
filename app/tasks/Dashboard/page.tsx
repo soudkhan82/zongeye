@@ -1,0 +1,168 @@
+"use client";
+
+import {
+  getActionsAll,
+  getActionsByRegion,
+  getActionsByStatus,
+  getActionsByType,
+  getAllActions,
+} from "@/app/actions/tasks";
+import {
+  ActionItem,
+  ActionTypeCount,
+  RegionCount,
+  StatusCount,
+} from "@/interfaces";
+import { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import PageTitle from "@/components/ui/page-title";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+export default function ActionsDashboard() {
+  const [regionData, setRegionData] = useState<RegionCount[]>([]);
+  const [typeData, setTypeData] = useState<ActionTypeCount[]>([]);
+  const [statusData, setStatusData] = useState<StatusCount[]>([]);
+  const [allActions, setAllActions] = useState<ActionItem[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [regionResult, typeResult, statusResult, allResult] =
+        await Promise.all([
+          getActionsByRegion(),
+          getActionsByType(),
+          getActionsByStatus(),
+          getAllActions(),
+        ]);
+
+      if (regionResult) setRegionData(regionResult);
+      if (typeResult) setTypeData(typeResult);
+      if (statusResult) setStatusData(statusResult);
+      if (allResult) setAllActions(allResult);
+      console.log(allResult);
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <div className="p-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">Actions Dashboard</h1>
+      <div className="flex items-center justify-between p-5">
+        <PageTitle title="Engineering Tasks" />
+        <Button>
+          <Link href="./tasks/add">Add Ticket</Link>
+        </Button>
+        <Button>
+          <Link href="../tasks">Tasks Table</Link>
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        {/* Chart 1: By Region */}
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4 text-center">
+            Actions by Region
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={regionData}>
+              <XAxis dataKey="region" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="total" fill="#8884d8" name="Actions" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Chart 2: By Action Type */}
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4 text-center">
+            Actions by Type
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={typeData}>
+              <XAxis dataKey="action_type" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#82ca9d" name="Actions" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Chart 3: By Status */}
+        <div className="bg-white p-6 rounded shadow">
+          <h2 className="text-xl font-semibold mb-4 text-center">
+            Actions by Status
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={statusData}>
+              <XAxis dataKey="status" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#ffc658" name="Actions" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <div className="mt-1">
+        <h2 className="text-2xl font-semibold">All Actions</h2>
+        <div className="bg-white p-6 rounded shadow h-[300px] overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-100">
+                <TableHead className="font-bold text-gray-700">ID</TableHead>
+                <TableHead className="font-bold text-gray-700">Title</TableHead>
+                <TableHead className="font-bold text-gray-700">
+                  Region
+                </TableHead>
+                <TableHead className="font-bold text-gray-700">
+                  Status
+                </TableHead>
+                <TableHead className="font-bold text-gray-700">
+                  Action Type
+                </TableHead>
+                <TableHead className="font-bold text-gray-700">
+                  Target Timeline
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allActions.map((action) => (
+                <TableRow key={action.id}>
+                  <TableCell>
+                    <Link href={`/tasks/detail/${action.id}`}>{action.id}</Link>
+                  </TableCell>
+                  <TableCell>{action.title}</TableCell>
+                  <TableCell>{action.region}</TableCell>
+                  <TableCell>{action.status}</TableCell>
+                  <TableCell>{action.ActionType}</TableCell>
+
+                  <TableCell>
+                    {new Date(action.created_at).toLocaleDateString() ?? ""}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </div>
+  );
+}

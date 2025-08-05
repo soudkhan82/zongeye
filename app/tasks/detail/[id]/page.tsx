@@ -23,10 +23,10 @@ async function TaskDetailsPage({ params }: Props) {
     return <ErrorMessage error={response.message} />;
   }
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center bg-gray-100 p-4">
+    <div className=" w-full flex flex-col min-h-screen items-center justify-center bg-gray-100 p-4">
       <h1 className="text-xl">Details</h1>
 
-      <Card className="w-full max-w-md shadow-xl rounded-2xl bg-white">
+      <Card className="w-2/3  shadow-xl rounded-2xl bg-white">
         <CardHeader>
           <CardTitle className="text-2xl">{actionitem.title}</CardTitle>
         </CardHeader>

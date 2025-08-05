@@ -28,7 +28,7 @@ const columns = [
   "Target",
   "Status",
   "Lead Dept",
-
+  "createdAt",
   "Edit",
 ];
 
@@ -87,12 +87,17 @@ function SndList() {
         </button>
       </form>
       <div>
+        <div></div>
         <div className="flex items-center justify-between p-5">
           <PageTitle title="Engineering Tasks" />
           <Button>
             <Link href="./tasks/add">Add Ticket</Link>
           </Button>
+          <Button>
+            <Link href="./tasks/Dashboard">Goto Dashboard</Link>
+          </Button>
         </div>
+
         {loading && <Loader />}
         {!loading && actions.length > 0 && (
           <div className="p-5">
@@ -123,6 +128,9 @@ function SndList() {
                     <TableCell>{action.target_timeline}</TableCell>
                     <TableCell>{action.status}</TableCell>
                     <TableCell>{action.lead_department}</TableCell>
+                    <TableCell>
+                      {new Date(action.created_at).toLocaleDateString()}
+                    </TableCell>
 
                     <TableCell
                       data-label="actions"
