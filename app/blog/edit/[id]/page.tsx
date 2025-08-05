@@ -5,20 +5,18 @@ import { getPostById, updatePost } from "@/app/actions/blog";
 import { BlogForm } from "../../components/BlogForm";
 
 interface EditPostPageProps {
-  params: {
-    id: number;
-  };
+  params: Promise<{ id: number }>;
 }
 
 export default async function EditPostPage({ params }: EditPostPageProps) {
-  const id = Number(params.id);
+  const { id } = await params;
 
   // If ID is not a number, show 404
   if (isNaN(id)) {
     return notFound();
   }
 
-  const post = await getPostById(id);
+  const post = await getPostById(id!);
 
   if (!post) {
     return notFound();
