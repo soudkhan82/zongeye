@@ -5,10 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { deletePost, getPosts } from "../actions/blog";
 import { BlogPost } from "@/interfaces";
-import usersGlobalStore, { IUsersGlobalStore } from "@/store/users-global-store";
 
 export default function BlogPage() {
-    const { user } = usersGlobalStore() as IUsersGlobalStore;
   const [posts, setPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
@@ -34,7 +32,6 @@ export default function BlogPage() {
           </p>
           {post.image && <img src={post.image} alt="" className="w-128 mt-2" />}
 
-          
           <div className="mt-2 flex gap-2">
             <Link href={`/blog/edit/${post.id}`}>
               <Button>Edit</Button>

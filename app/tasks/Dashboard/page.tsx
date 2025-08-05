@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  getActionsAll,
   getActionsByRegion,
   getActionsByStatus,
   getActionsByType,
