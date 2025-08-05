@@ -60,10 +60,12 @@ export default function ActionsDashboard() {
   }, []);
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">Actions Dashboard</h1>
-      <div className="flex items-center justify-between p-5">
-        <PageTitle title="Engineering Tasks" />
+    <div className="p-3">
+      <div className="flex items-center justify-between p-2">
+        <h1 className="text-3xl font-bold mb-6 text-center">
+          Actions Dashboard
+        </h1>
+
         <Button>
           <Link href="./tasks/add">Add Ticket</Link>
         </Button>
@@ -73,7 +75,7 @@ export default function ActionsDashboard() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {/* Chart 1: By Region */}
-        <div className="bg-white p-6 rounded shadow">
+        <div className="bg-white p-1 rounded shadow">
           <h2 className="text-xl font-semibold mb-4 text-center">
             Actions by Region
           </h2>
