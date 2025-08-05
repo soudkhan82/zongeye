@@ -6,7 +6,7 @@ import { BlogForm } from "../../components/BlogForm";
 
 interface EditPostPageProps {
   params: {
-    id: string;
+    id: number;
   };
 }
 
