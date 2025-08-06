@@ -13,6 +13,7 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/vendor") ||
     pathname.startsWith("/home") ||
     pathname.startsWith("/blog") ||
+    pathname.startsWith("/avail") ||
     pathname.startsWith("/gis");
 
   if (isPrivate) {

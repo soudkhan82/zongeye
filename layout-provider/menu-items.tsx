@@ -9,9 +9,12 @@ import { useRouter, usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   ChartPie,
+  FileDown,
   MailSearch,
   Map,
   MapPinHouseIcon,
+  Network,
+  Newspaper,
   SquareCheckBig,
 } from "lucide-react";
 import {
@@ -50,7 +53,12 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
     {
       title: "Geographical Information Sys",
       route: "/gis/search",
-      icon: <Map size={14} />,
+      icon: <Map size={16} />,
+    },
+    {
+      title: "Availability",
+      route: "/avail",
+      icon: <Network size={16} />,
     },
     // {
     //   title: "Add Ticket",
@@ -65,17 +73,17 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
     {
       title: "Action Items",
       route: "/tasks",
-      icon: <SquareCheckBig size={14} />,
+      icon: <SquareCheckBig size={16} />,
     },
     {
       title: "Network Achievements",
       route: "/blog",
-      icon: <MailSearch size={14} />,
+      icon: <Newspaper size={16} />,
     },
     {
       title: "Site Access Requests",
       route: "/vendor/SAR",
-      icon: <MailSearch size={14} />,
+      icon: <FileDown size={16} />,
     },
   ];
   let VendorMenuItems = [

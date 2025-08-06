@@ -127,6 +127,7 @@ function GISMapList() {
                       className="flex gap-5 items-center"
                     >
                       <Button
+                        disabled={true}
                         variant={"outline"}
                         size={"icon"}
                         className="cursor-pointer"
