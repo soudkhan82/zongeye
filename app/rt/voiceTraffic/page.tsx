@@ -42,9 +42,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getSubRegions } from "@/app/actions/avail";
-
+import dynamic from "next/dynamic";
 import { Card, CardContent } from "@/components/ui/card";
-
+const Map = dynamic(() => import("@/app/gis/components/Map"), {
+  ssr: false,
+});
 export default function VoiceTrafficPage() {
   const [sites, setSites] = useState<VoiceTraffic[]>([]);
   const [selectedSubRegion, setSelectedSubRegion] = useState<string>("");
