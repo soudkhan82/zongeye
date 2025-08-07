@@ -25,11 +25,16 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  BarChart,
+  Legend,
+  Bar,
 } from "recharts";
 import {
   getAvailperMonth,
   getAvgAvailByCat,
+  getBottom10Districts,
   getSubRegions,
+  getTop10Districts,
 } from "../actions/avail";
 
 export default function AvailabilityPage() {
@@ -45,6 +50,8 @@ export default function AvailabilityPage() {
   const [data, setData] = useState<
     { month: string; avg_availability: number }[]
   >([]);
+  const [topData, setTopData] = useState([]);
+  const [bottomData, setBottomData] = useState([]);
 
   useEffect(() => {
     getSubRegions().then(setSubregions);
@@ -55,6 +62,8 @@ export default function AvailabilityPage() {
       getAvailperMonth(selectedSubregion).then(setData);
       getAvgAvailByCat(selectedSubregion, "PGS").then(setPgsData);
       getAvgAvailByCat(selectedSubregion, "SB").then(setSbData);
+      getTop10Districts(selectedSubregion).then(setTopData);
+      getBottom10Districts(selectedSubregion).then(setBottomData);
     }
   }, [selectedSubregion]);
 
@@ -147,6 +156,59 @@ export default function AvailabilityPage() {
                 connectNulls
               />
             </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
+        <div className="p-4 border rounded-xl shadow bg-white">
+          <h2 className="font-bold text-lg mb-4 text-center">
+            Top 10 Districts - {selectedSubregion}
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={topData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="district"
+                angle={-45}
+                textAnchor="end"
+                height={60}
+                dy={10}
+              />
+              <YAxis domain={[70, 100]} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey="avg_availability"
+                fill="#22c55e"
+                name="Avg Availability"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="p-4 border rounded-xl shadow bg-white">
+          <h2 className="font-bold text-lg mb-4 text-center">
+            Bottom 10 Districts - {selectedSubregion}
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={bottomData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="district"
+                angle={-45}
+                textAnchor="end"
+                height={60}
+                dy={10}
+              />
+              <YAxis domain={[0, 100]} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey="avg_availability"
+                fill="#21c55e"
+                name="Avg Availability"
+              />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>

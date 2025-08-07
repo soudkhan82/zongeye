@@ -35,3 +35,20 @@ export async function getSubRegions() {
 
   return data.map((d: { subregion: string }) => d.subregion);
 }
+
+export async function getTop10Districts(subregion: string) {
+  const { data, error } = await supabase.rpc("top_10_districts_availability", {
+    subregion: subregion,
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function getBottom10Districts(subregion: string) {
+  const { data, error } = await supabase.rpc(
+    "bottom_10_districts_availability",
+    { subregion: subregion }
+  );
+  if (error) throw new Error(error.message);
+  return data;
+}
