@@ -156,3 +156,15 @@ table {
   align-items: center;
   justify: center;
 }
+.leaflet-marker-icon {
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+
+.custom-dot-icon {
+  background-color: #1e90ff; /* DodgerBlue or use any color */
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+}

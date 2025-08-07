@@ -112,7 +112,7 @@ export interface ActionItem {
   lead_department: string;
   ActionType: string;
   description: string;
-  created_at:string;
+  created_at: string;
 }
 
 export interface FuelModel {
@@ -147,7 +147,17 @@ export interface GeoPoint {
   District: string;
   Address: string;
 }
-
+export interface VoiceTraffic {
+  name: string;
+  voice2gtraffic: number;
+  voice3gtraffic: number;
+  voltetraffic: number;
+  longitude: number;
+  latitude: number;
+  siteclassification: string;
+  subregion: string;
+  address: string;
+}
 export interface Availability {
   id: number;
   month: string;
