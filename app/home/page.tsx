@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 
 import Image from "next/image";
+import Link from "next/link";
 
 export default function HomePge() {
   return (
@@ -49,32 +50,35 @@ export default function HomePge() {
         </div>
 
         {/* Features Section */}
-        <section className="container mx-auto px-4 py-12 grid md:grid-cols-3 gap-8 text-center">
-          {[
-            {
-              title: "Geographical Information System",
-              desc: "Blazing fast with Server Side Rendering (SSR).",
-            },
-            {
-              title: "Intuitive Visualizations",
-              desc: "World-class contemporary UI Visuals with interactive controls",
-            },
-            {
-              title: "Smart Partner Access",
-              desc: "Automated Outsource Management System",
-            },
-          ].map((feature, index) => (
-            <div
-              key={index}
-              className="p-6 bg-white rounded-xl shadow hover:shadow-lg transition-shadow"
-            >
-              <h3 className="text-xl font-semibold mb-3 text-blue-600">
-                {feature.title}
-              </h3>
-              <p className="text-gray-600">{feature.desc}</p>
-            </div>
-          ))}
-        </section>
+
+        <Link href={"/rt/voiceTraffic"}>
+          <section className="container mx-auto px-4 py-12 grid md:grid-cols-3 gap-8 text-center">
+            {[
+              {
+                title: "Geographical Information System",
+                desc: "Blazing fast with Server Side Rendering (SSR).",
+              },
+              {
+                title: "Intuitive Visualizations",
+                desc: "World-class contemporary UI Visuals with interactive controls",
+              },
+              {
+                title: "Smart Partner Access",
+                desc: "Automated Outsource Management System",
+              },
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="p-6 bg-white rounded-xl shadow hover:shadow-lg transition-shadow"
+              >
+                <h3 className="text-xl font-semibold mb-3 text-blue-600">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600">{feature.desc}</p>
+              </div>
+            ))}
+          </section>
+        </Link>
       </main>
     </div>
   );
