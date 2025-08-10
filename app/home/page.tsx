@@ -51,7 +51,7 @@ export default function HomePge() {
 
         {/* Features Section */}
 
-        <Link href={"/rt/voiceTraffic"}>
+        <Link href={"/rt"}>
           <section className="container mx-auto px-4 py-12 grid md:grid-cols-3 gap-8 text-center">
             {[
               {

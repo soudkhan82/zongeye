@@ -1,7 +1,12 @@
 "use client";
-
-import { useEffect, useState } from "react";
-
+import {
+  fetchDataStats,
+  fetchDataTraffic,
+  getDistricts,
+  getSubRegions,
+} from "@/app/actions/rt";
+import { DataStats, DataTraffic } from "@/interfaces";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,9 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-import { VoiceStats, VoiceTraffic } from "@/interfaces";
-
 import {
   Select,
   SelectContent,
@@ -20,26 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getSubRegions } from "@/app/actions/rt";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import VoiceMap from "@/app/gis/components/VoiceMap";
-import {
-  fetchVoiceStats,
-  fetchVoiceTraffic,
-  getDistricts,
-} from "@/app/actions/rt";
-
-//Helper function to compute statistics
-
-export default function VoiceTrafficPage() {
-  const [stats, setStats] = useState<VoiceStats | null>(null);
-  const [sites, setSites] = useState<VoiceTraffic[]>([]);
+import DataMap from "@/app/gis/components/DataMap";
+function DataTrafficPage() {
+  const [stats, setStats] = useState<DataStats | null>(null);
+  const [sites, setSites] = useState<DataTraffic[]>([]);
   const [districtoptions, setDistrictoptions] = useState<string[]>([]);
   const [selDistrict, setselDistrict] = useState<string>();
   const [selectedSubRegion, setSelectedSubRegion] = useState<string>("");
   const [subregionOptions, setSubregionOptions] = useState<string[]>([]);
-
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -56,7 +48,6 @@ export default function VoiceTrafficPage() {
   useEffect(() => {
     getSubRegions().then(setSubregionOptions);
   }, []);
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -68,8 +59,8 @@ export default function VoiceTrafficPage() {
       setLoading(true);
       try {
         const [siteRows, statRow] = await Promise.all([
-          fetchVoiceTraffic(selectedSubRegion),
-          fetchVoiceStats(selectedSubRegion),
+          fetchDataTraffic(selectedSubRegion),
+          fetchDataStats(selectedSubRegion),
         ]);
         if (!cancelled) {
           setSites(siteRows);
@@ -89,10 +80,11 @@ export default function VoiceTrafficPage() {
       ? "—"
       : n.toLocaleString(undefined, opts);
   }
+
   return (
     <div className="w-full p-4 space-y-4">
       <h1 className="text-2xl font-bold text-center my-6 text-indigo-700">
-        Geo-Analytics Voice Traffic
+        Geo-Analytics Data Traffic
       </h1>
       <div className="w-full flex justify-start space-x-3">
         <Select onValueChange={setSelectedSubRegion}>
@@ -133,34 +125,28 @@ export default function VoiceTrafficPage() {
           </Card>
           <Card className="bg-pink-100">
             <CardHeader>
-              <CardTitle>Average Voice 2G(Erl)</CardTitle>
+              <CardTitle>Average Data3G(GB)</CardTitle>
             </CardHeader>
-            <CardContent>{fmt(stats?.avg_voice2g)}</CardContent>
+            <CardContent>{fmt(stats?.avg_data3g)}</CardContent>
           </Card>
           <Card className="bg-pink-100">
             <CardHeader>
-              <CardTitle>Average Voice 3G(Erl)</CardTitle>
+              <CardTitle>Average Data4G(GB)</CardTitle>
             </CardHeader>
-            <CardContent>{fmt(stats?.avg_voice3g)}</CardContent>
-          </Card>
-          <Card className="bg-pink-100">
-            <CardHeader>
-              <CardTitle>Average VoiceLTE(Erl)</CardTitle>
-            </CardHeader>
-            <CardContent>{fmt(stats?.avg_voicelte)}</CardContent>
+            <CardContent>{fmt(stats?.avg_data4g)}</CardContent>
           </Card>
 
           <Card className="bg-pink-100">
             <CardHeader>
-              <CardTitle>Total Voice Revenue(PKR)</CardTitle>
+              <CardTitle>Total Data Revenue(PKR)</CardTitle>
             </CardHeader>
-            <CardContent>{fmt(stats?.total_voice_revenue)}</CardContent>
+            <CardContent>{fmt(stats?.total_data_revenue)}</CardContent>
           </Card>
           <Card className="bg-pink-100">
             <CardHeader>
-              <CardTitle>Avg Voice Revenue(PKR)</CardTitle>
+              <CardTitle>Avg Data Revenue(PKR)</CardTitle>
             </CardHeader>
-            <CardContent>{fmt(stats?.avg_voice_revenue)}</CardContent>
+            <CardContent>{fmt(stats?.avg_data_revenue)}</CardContent>
           </Card>
         </div>
       )}
@@ -175,9 +161,9 @@ export default function VoiceTrafficPage() {
               <TableHeader className="bg-gray-200">
                 <TableRow>
                   <TableHead className="font-bold">Name</TableHead>
-                  <TableHead className="font-bold">Voice2G_E</TableHead>
-                  <TableHead className="font-bold">Voice3G_E</TableHead>
-                  <TableHead className="font-bold">VoLTE</TableHead>
+                  <TableHead className="font-bold">Data3G</TableHead>
+                  <TableHead className="font-bold">Data4G</TableHead>
+                  <TableHead className="font-bold">DataRev</TableHead>
                   <TableHead className="font-bold">Classification</TableHead>
                   <TableHead className="font-bold">District</TableHead>
                   <TableHead className="font-bold">SubRegion</TableHead>
@@ -195,9 +181,9 @@ export default function VoiceTrafficPage() {
                     // }
                   >
                     <TableCell>{site.name}</TableCell>
-                    <TableCell>{site.voice2gtraffic}</TableCell>
-                    <TableCell>{site.voice3gtraffic}</TableCell>
-                    <TableCell>{site.voltetraffic}</TableCell>
+                    <TableCell>{site.data3gtraffic}</TableCell>
+                    <TableCell>{site.data4gtraffic}</TableCell>
+                    <TableCell>{site.datarevenue}</TableCell>
                     <TableCell>{site.siteclassification}</TableCell>
                     <TableCell>{site.district}</TableCell>
                     <TableCell>{site.subregion}</TableCell>
@@ -210,9 +196,11 @@ export default function VoiceTrafficPage() {
         </Card>
         {/* Map */}
         <Card className="w-full h-[400px]">
-          <VoiceMap points={sites} />
+          <DataMap points={sites} />
         </Card>
       </div>
     </div>
   );
 }
+
+export default DataTrafficPage;

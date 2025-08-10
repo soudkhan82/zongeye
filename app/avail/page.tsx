@@ -33,9 +33,11 @@ import {
   getAvailperMonth,
   getAvgAvailByCat,
   getBottom10Districts,
-  getSubRegions,
   getTop10Districts,
 } from "../actions/avail";
+
+import { getSubRegions } from "../actions/rt";
+
 
 export default function AvailabilityPage() {
   const [subregions, setSubregions] = useState<string[]>([]);

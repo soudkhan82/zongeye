@@ -148,6 +148,17 @@ export interface GeoPoint {
   District: string;
   Address: string;
 }
+
+export interface Availability {
+  id: number;
+  month: string;
+  SITE_ID: string;
+  SubRegion: string;
+  Region: string;
+  CAT: string;
+  Availability: number;
+}
+
 export interface VoiceTraffic {
   name: string;
   voice2gtraffic: number;
@@ -161,14 +172,17 @@ export interface VoiceTraffic {
   address: string;
   district: string;
 }
-export interface Availability {
-  id: number;
-  month: string;
-  SITE_ID: string;
-  SubRegion: string;
-  Region: string;
-  CAT: string;
-  Availability: number;
+export interface DataTraffic {
+  name: string;
+  data3gtraffic: number;
+  data4gtraffic: number;
+  datarevenue: number;
+  longitude: number;
+  latitude: number;
+  siteclassification: string;
+  subregion: string;
+  address: string;
+  district: string;
 }
 
 export interface VoiceStats {
@@ -178,4 +192,12 @@ export interface VoiceStats {
   avg_voicelte: number | null;
   total_voice_revenue: number | null;
   avg_voice_revenue: number | null;
+}
+
+export interface DataStats {
+  distinct_sites: number;
+  avg_data3g: number | null;
+  avg_data4g: number | null;
+  total_data_revenue: number | null;
+  avg_data_revenue: number | null;
 }
