@@ -64,7 +64,7 @@ export default function VoiceMap({ points, initialView }: MapProps) {
     if (revenue === null) return "bg-gray-500";
     if (revenue <= 200000) return "bg-red-700";
     if (revenue <= 500000 && revenue > 200000) return "bg-orange-500";
-    if (revenue >= 500000 && revenue <= 100000) return "bg-yellow-500";
+    if (revenue >= 500000 && revenue <= 80000) return "bg-yellow-500";
     return "bg-green-500";
   };
 
