@@ -58,7 +58,7 @@ export async function getGrids(subregion?: string | null): Promise<string[]> {
   if (s) q = q.eq("SubRegion", s);
   const { data, error } = await q.order("Grid", { ascending: true });
   if (error) throw error;
-  return Array.from(new Set((data ?? []).map((r: any) => r.Grid)));
+  return Array.from(new Set((data ?? []).map((r) => r.Grid)));
 }
 
 export async function getDistricts(
@@ -69,5 +69,5 @@ export async function getDistricts(
   if (s) q = q.eq("SubRegion", s);
   const { data, error } = await q.order("District", { ascending: true });
   if (error) throw error;
-  return Array.from(new Set((data ?? []).map((r: any) => r.District)));
+  return Array.from(new Set((data ?? []).map((r) => r.District)));
 }
