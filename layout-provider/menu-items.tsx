@@ -52,9 +52,15 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
     // },
     {
       title: "Geographical Information Sys",
-      route: "/gis/search",
+      route: "/ssl",
       icon: <Map size={16} />,
     },
+    {
+      title: "Revenue Traffic",
+      route: "/rt",
+      icon: <Map size={16} />,
+    },
+
     {
       title: "Availability",
       route: "/avail",

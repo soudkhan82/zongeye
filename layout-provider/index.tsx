@@ -14,7 +14,9 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/home") ||
     pathname.startsWith("/blog") ||
     pathname.startsWith("/avail") ||
-    pathname.startsWith("/gis");
+    pathname.startsWith("/gis") ||
+    pathname.startsWith("/rt") ||
+    pathname.startsWith("/ssl");
 
   if (isPrivate) {
     return <PrivateLayout>{children}</PrivateLayout>;
