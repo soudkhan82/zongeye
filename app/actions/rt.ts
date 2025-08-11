@@ -31,10 +31,12 @@ export async function getDistricts(subregion?: string): Promise<string[]> {
 }
 
 export async function fetchVoiceTraffic(
-  selectedSubRegion: string
+  selectedSubRegion: string | null,
+  selectedDistrict: string | null
 ): Promise<VoiceTraffic[]> {
   const { data, error } = await supabase.rpc("fetch_sites_with_voice_traffic", {
     subregion_input: selectedSubRegion,
+    district_input: selectedDistrict || null,
   });
 
   if (error) {
@@ -42,13 +44,15 @@ export async function fetchVoiceTraffic(
     return [];
   }
 
-  return data as VoiceTraffic[];
+  return (data ?? []) as VoiceTraffic[];
 }
 export async function fetchVoiceStats(
-  selectedSubRegion: string
+  selectedSubRegion: string,
+  selectedDistrict: string | null
 ): Promise<VoiceStats> {
   const { data, error } = await supabase.rpc("fetch_voice_stats", {
     subregion_input: selectedSubRegion,
+    district_input: selectedDistrict,
   });
   if (error) console.error("RPC Error:", error);
   const row = (data && data[0]) || null;
