@@ -201,3 +201,14 @@ export interface DataStats {
   total_data_revenue: number | null;
   avg_data_revenue: number | null;
 }
+
+export interface sslSite {
+  name: string;
+  district: string;
+  grid: string;
+  address: string | null;
+  Siteclassification: string;
+  subregion: string | null;
+  latitude: number;
+  longitude: number;
+}
