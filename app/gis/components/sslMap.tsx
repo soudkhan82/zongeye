@@ -32,10 +32,6 @@ export type MapHandle = {
   fitToPoints: (padding?: number) => void;
 };
 
-function fmt(n: number | null | undefined, opts?: Intl.NumberFormatOptions) {
-  return n == null ? "—" : n.toLocaleString(undefined, opts);
-}
-
 function getMarkerColor(cls?: string | null) {
   switch ((cls ?? "").toLowerCase()) {
     case "platinum":

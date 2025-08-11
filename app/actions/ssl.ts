@@ -30,26 +30,27 @@ export async function fetchSslSites(
   if (error) throw error;
 
   // type guard: ensures latitude and longitude are numbers
-  function hasCoords(
-    r: any
-  ): r is any & { Latitude: number; Longitude: number } {
-    return r?.Latitude != null && r?.Longitude != null;
-  }
+  //   function hasCoords(
+  //     r: any
+  //   ): r is any & { Latitude: number; Longitude: number } {
+  //     return r?.Latitude != null && r?.Longitude != null;
+  //   }
 
-  return (data ?? [])
-    .filter(hasCoords)
-    .map((r) => ({
-      name: r.Name,
-      district: r.District,
-      grid: r.Grid,
-      address: r.Address,
-      Siteclassification: r.SiteClassification, // fixed capitalisation
-      subregion: r.SubRegion,
-      latitude: Number(r.Latitude),
-      longitude: Number(r.Longitude),
-    }));
+  return (
+    (data ?? [])
+      // .filter(hasCoords)
+      .map((r) => ({
+        name: r.Name,
+        district: r.District,
+        grid: r.Grid,
+        address: r.Address,
+        Siteclassification: r.SiteClassification, // fixed capitalisation
+        subregion: r.SubRegion,
+        latitude: Number(r.Latitude),
+        longitude: Number(r.Longitude),
+      }))
+  );
 }
-
 
 export async function getGrids(subregion?: string | null): Promise<string[]> {
   let q = supabase.from("ssl").select("Grid").not("Grid", "is", null);
