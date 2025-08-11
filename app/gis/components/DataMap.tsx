@@ -120,7 +120,10 @@ export default function VoiceMap({ points, initialView }: MapProps) {
               )}
 
               {hoveredPoint.datarevenue !== null && (
-                <div>Voice Revenue: {fmt(hoveredPoint.datarevenue)}</div>
+                <div>Data Revenue: {fmt(hoveredPoint.datarevenue)}</div>
+              )}
+              {hoveredPoint.address !== null && (
+                <div>Address: {hoveredPoint.address}</div>
               )}
             </div>
           </Popup>

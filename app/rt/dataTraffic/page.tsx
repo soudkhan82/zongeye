@@ -59,8 +59,8 @@ function DataTrafficPage() {
       setLoading(true);
       try {
         const [siteRows, statRow] = await Promise.all([
-          fetchDataTraffic(selectedSubRegion),
-          fetchDataStats(selectedSubRegion),
+          fetchDataTraffic(selectedSubRegion, selDistrict ?? null),
+          fetchDataStats(selectedSubRegion, selDistrict ?? null),
         ]);
         if (!cancelled) {
           setSites(siteRows);
@@ -73,7 +73,7 @@ function DataTrafficPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedSubRegion]);
+  }, [selectedSubRegion, selDistrict]);
 
   function fmt(n: number | null | undefined, opts?: Intl.NumberFormatOptions) {
     return n === null || typeof n === "undefined"
@@ -87,7 +87,12 @@ function DataTrafficPage() {
         Geo-Analytics Data Traffic
       </h1>
       <div className="w-full flex justify-start space-x-3">
-        <Select onValueChange={setSelectedSubRegion}>
+        <Select
+          onValueChange={(v) => {
+            setSelectedSubRegion(v);
+            setselDistrict(undefined);
+          }}
+        >
           <SelectTrigger className="w-64">
             <SelectValue placeholder="Select a subregion" />
           </SelectTrigger>

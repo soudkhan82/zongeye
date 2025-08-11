@@ -70,10 +70,12 @@ export async function fetchVoiceStats(
 }
 
 export async function fetchDataTraffic(
-  selectedSubRegion: string
+  selectedSubRegion: string,
+  selectedDistrict: string | null
 ): Promise<DataTraffic[]> {
   const { data, error } = await supabase.rpc("fetch_sites_with_data_traffic", {
     subregion_input: selectedSubRegion,
+    district_input: selectedDistrict || null,
   });
   if (error) {
     console.error("RPC error", error);
@@ -83,10 +85,12 @@ export async function fetchDataTraffic(
 }
 
 export async function fetchDataStats(
-  selectedSubRegion: string
+  selectedSubRegion: string,
+  selectedDistrict: string | null
 ): Promise<DataStats> {
   const { data, error } = await supabase.rpc("fetch_data_stats", {
     subregion_input: selectedSubRegion,
+    district_input: selectedDistrict,
   });
   if (error) {
     console.log("RPC error", error);

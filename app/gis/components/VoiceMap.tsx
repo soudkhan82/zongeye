@@ -115,14 +115,17 @@ export default function VoiceMap({ points, initialView }: MapProps) {
               {hoveredPoint.voice2gtraffic !== null && (
                 <div>Voice 2G Traffic: {hoveredPoint.voice2gtraffic}</div>
               )}
-              {hoveredPoint.voice2gtraffic !== null && (
+              {hoveredPoint.voice3gtraffic !== null && (
                 <div>Voice 3G Traffic: {hoveredPoint.voice3gtraffic}</div>
               )}
-              {hoveredPoint.voice2gtraffic !== null && (
+              {hoveredPoint.voltetraffic !== null && (
                 <div>Voice LTE Traffic: {hoveredPoint.voltetraffic}</div>
               )}
-              {hoveredPoint.voice2gtraffic !== null && (
+              {hoveredPoint.voicerevenue !== null && (
                 <div>Voice Revenue: {fmt(hoveredPoint.voicerevenue)}</div>
+              )}
+              {hoveredPoint.address !== null && (
+                <div>Address: {hoveredPoint.address}</div>
               )}
             </div>
           </Popup>
