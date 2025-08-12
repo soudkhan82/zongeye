@@ -1,6 +1,6 @@
 // app/ss/vitals/[id]/page.tsx
 
-import { getAvailabilityBySite, getSites } from "@/app/actions/avail";
+import { getAvailabilityBySite } from "@/app/actions/avail";
 import AvailabilityView from "../../components/availability_view";
 
 type PageProps = { params: { id: string } };
