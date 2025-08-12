@@ -7,10 +7,10 @@ import { AvailabilityPoint } from "@/interfaces";
 export default async function VitalsPage({
   params,
 }: {
-  params: { id: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: Promise<{ id: string }>;
 }) {
-  const siteName = decodeURIComponent(params.id); // "Name" passed in URL
+  const resolvedParams = await params;
+  const siteName = decodeURIComponent(resolvedParams.id); // "Name" passed in URL
   const data: AvailabilityPoint[] = await getAvailabilityBySite(siteName);
 
   return <AvailabilityView data={data} title={siteName} />;
