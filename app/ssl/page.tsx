@@ -24,7 +24,10 @@ import { sslSite } from "@/interfaces";
 import { getSubRegions } from "../actions/rt";
 import { fetchSslSites, getGrids, getDistricts } from "@/app/actions/ssl";
 import SSlMap, { MapHandle } from "../gis/components/sslMap";
-
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
 export default function SslPage() {
   const [subregion, setSubregion] = useState<string>("");
   const [grid, setGrid] = useState<string | null>(null);
@@ -34,10 +37,12 @@ export default function SslPage() {
   const [grids, setGrids] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
   const [selected, setSelected] = useState<sslSite | null>(null);
+  const [selectedName, setSelectedName] = useState<string>("");
   const [rows, setRows] = useState<sslSite[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const router = useRouter();
   const onRowClick = (p: sslSite) => {
+    setSelectedName(p.name);
     setSelected(p);
     mapRef.current?.flyTo(p.longitude, p.latitude, 14);
   };
@@ -103,6 +108,19 @@ export default function SslPage() {
       <h1 className="text-2xl font-bold text-center my-6 text-indigo-700">
         Geo-Analytics: SSL Sites
       </h1>
+      <h4>Selected Site</h4>
+      {selectedName && (
+        <div className="hover:bg-accent/50 transition-colors w-[250px]">
+          <Link href={`/ssl/vitals/${selectedName}`}>
+            <Input
+              className="cursor-pointer"
+              placeholder="Selected Site"
+              value={selectedName}
+              disabled={!selectedName}
+            ></Input>
+          </Link>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
@@ -167,9 +185,6 @@ export default function SslPage() {
       <div className="grid md:grid-cols-2 gap-4">
         {/* Table */}
         <Card className="w-full h-fit">
-          <CardHeader>
-            <CardTitle>Sites</CardTitle>
-          </CardHeader>
           <CardContent className="overflow-auto max-h-[420px]">
             {loading && (
               <div className="text-center text-gray-500">Loading…</div>
@@ -190,6 +205,7 @@ export default function SslPage() {
                   <TableRow
                     key={r.name}
                     className="cursor-pointer hover:bg-accent/50 transition-colors"
+                    onDoubleClick={() => router.push(`/ssl/vitals/${r.name}`)}
                     onClick={() => onRowClick(r)}
                   >
                     <TableCell>{r.name}</TableCell>

@@ -158,6 +158,10 @@ export interface Availability {
   CAT: string;
   Availability: number;
 }
+export interface AvailabilityPoint {
+  month: string;
+  availability: number;
+}
 
 export interface VoiceTraffic {
   name: string;
