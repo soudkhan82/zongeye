@@ -10,6 +10,7 @@ interface Props {
 
 async function EditActionItem({ params }: Props) {
   const { id } = await params;
+
   const response = await getActionById(id!);
   if (!response.success) {
     return <ErrorMessage error={response.message} />;

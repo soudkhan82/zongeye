@@ -2,13 +2,15 @@
 import {
   ActionItem,
   ActionTypeCount,
+  NewActionItem,
   RegionCount,
   StatusCount,
+  UpdateActionItem,
 } from "@/interfaces";
 import supabase from "../config/supabase-config";
-import { ActionItemPayload } from "./types";
+
 const PAGE_SIZE = 5;
-export const createNewActionItem = async (payload: ActionItemPayload) => {
+export const createNewActionItem = async (payload: NewActionItem) => {
   const { error } = await supabase.from("actions").insert(payload);
 
   if (error) throw error;
@@ -36,7 +38,7 @@ export const editActionByid = async ({
   payload,
 }: {
   action_id: number;
-  payload: ActionItemPayload;
+  payload: UpdateActionItem;
 }) => {
   const { error } = await supabase
     .from("actions")
@@ -127,4 +129,61 @@ export async function getAllActions(): Promise<ActionItem[] | null> {
   }
 
   return data;
+}
+
+type UploadResult =
+  | { success: true; url: string; path: string }
+  | { success: false; message: string };
+
+type UploadOpts = {
+  bucket?: string; // default: "action-images"
+  prefix?: string; // optional folder prefix
+  upsert?: boolean; // default: false
+  cacheControl?: string; // default: "3600"
+};
+
+export async function uploadImage(
+  file: File,
+  opts: UploadOpts = {}
+): Promise<UploadResult> {
+  try {
+    if (!file || file.size === 0) {
+      return { success: false, message: "No file provided" };
+    }
+
+    const bucket = opts.bucket ?? "blog-images";
+    const prefix = opts.prefix
+      ? opts.prefix.replace(/^\/+|\/+$/g, "") + "/"
+      : "";
+    const upsert = opts.upsert ?? false;
+    const cacheControl = opts.cacheControl ?? "3600";
+
+    // Create a user-scoped server client (respects RLS via cookies)
+
+    // Build a unique storage path
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const name = `action_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2)}.${ext}`;
+    const path = `${prefix}${name}`;
+
+    // Upload the File (Server Actions natively support File/Blob)
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        cacheControl,
+        upsert,
+        contentType: file.type || undefined,
+      });
+
+    if (error) return { success: false, message: error.message };
+
+    const { data: pub } = await supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+    return { success: true, url: pub.publicUrl, path: data.path };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Upload failed";
+    return { success: false, message: msg };
+  }
 }

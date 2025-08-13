@@ -1,5 +1,5 @@
 "use server";
-import { sslSite } from "@/interfaces";
+import { siteVitals, sslSite } from "@/interfaces";
 import supabase from "../config/supabase-config";
 
 const clean = (v?: string | null) => {
@@ -70,4 +70,18 @@ export async function getDistricts(
   const { data, error } = await q.order("District", { ascending: true });
   if (error) throw error;
   return Array.from(new Set((data ?? []).map((r) => r.District)));
+}
+
+export async function get_site_vitals_by_site(
+  name: string
+): Promise<siteVitals[]> {
+  const { data, error } = await supabase
+    .from("rt_trend")
+    .select("*")
+    .eq("Name", name)
+    .order("Month", { ascending: true });
+  console.log(data);
+  if (error) throw error;
+
+  return data;
 }

@@ -113,7 +113,10 @@ export interface ActionItem {
   ActionType: string;
   description: string;
   created_at: string;
+  image?: string | null;
 }
+export type NewActionItem = Omit<ActionItem, "id" | "created_at">;
+export type UpdateActionItem = Partial<NewActionItem>;
 
 export interface FuelModel {
   id: number;
@@ -215,4 +218,17 @@ export interface sslSite {
   subregion: string | null;
   latitude: number;
   longitude: number;
+}
+
+export interface siteVitals {
+  Month: string;
+  Name: string;
+  voice2GTrafficE: number;
+  voice3GTrafficE: number;
+  voLTEVoiceTrafficE: number;
+  data3GTrafficGB: number;
+  data4GTrafficGB: number;
+  MFULVoiceRev: number;
+  MFULDataRev: number;
+  MFULTotalRev: number;
 }

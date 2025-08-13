@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Acc_Region,
@@ -27,7 +27,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { createNewActionItem, editActionByid } from "@/app/actions/tasks";
+import {
+  createNewActionItem,
+  editActionByid,
+  uploadImage,
+} from "@/app/actions/tasks";
 
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,6 +47,10 @@ interface ActionItemProps {
 
 function ActionItemForm({ initialValues, formType }: ActionItemProps) {
   const [loading, setLoading] = React.useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  // const [preview, setPreview] = React.useState<string | null>(
+  //   initialValues?.image ?? null
+  // );
   const router = useRouter();
   const formSchema = z.object({
     title: z.string(),
@@ -55,6 +63,7 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
     ActionType: z.string(),
     region: z.string(),
     description: z.string(),
+    image: z.string().url().optional().nullable(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -69,11 +78,16 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
       ActionType: "",
       region: "",
       status: "",
+      image: null,
     },
   });
   useEffect(() => {
     if (initialValues) {
-      form.reset(initialValues);
+      form.reset({
+        ...initialValues,
+        image: initialValues.image ?? null,
+      });
+
       // Object.keys(initialValues).forEach((key: any) => {
       //   form.setValue(key, initialValues[key]);
       // });
@@ -97,15 +111,47 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
       }
     }
   };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     let response = null;
     console.log(values);
     try {
+      let imageUrl: string | null = values.image ?? null;
+
       setLoading(true);
-      if (formType == "add") {
-        response = await createNewActionItem({
-          ...values,
+
+      if (file) {
+        if (!file.type.startsWith("image/")) {
+          toast.error("Please select a valid image.");
+          setLoading(false);
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error("Image too large (max 5MB).");
+          setLoading(false);
+          return;
+        }
+        const res = await uploadImage(file, {
+          bucket: "blog-images",
+          prefix: "actions",
         });
+
+        if (!res.success) {
+          toast.error(res.message ?? "Image upload failed");
+          setLoading(false);
+          return;
+        }
+        imageUrl = res.url;
+      } else if (formType === "edit") {
+        // keep existing image if no new file chosen
+        imageUrl = initialValues?.image ?? null;
+      } else {
+        // add mode & no file: keep null
+        imageUrl = null;
+      }
+      const payload = { ...values, image: imageUrl };
+      if (formType == "add") {
+        response = await createNewActionItem({ ...values, image: imageUrl });
         if (response.success) {
           toast.success("Successfully created");
           router.push("/tasks");
@@ -116,7 +162,7 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
         }
         response = editActionByid({
           action_id: initialValues.id,
-          payload: values,
+          payload,
         });
         if ((await response).success) {
           toast.success((await response).message);
@@ -209,6 +255,12 @@ function ActionItemForm({ initialValues, formType }: ActionItemProps) {
                 <FormMessage />
               </FormItem>
             )}
+          />
+          <Input
+            placeholder="Upload Image"
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
           <FormField
             control={form.control}

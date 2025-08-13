@@ -107,16 +107,11 @@ export default function SslPage() {
       <h1 className="text-2xl font-bold text-center my-6 text-indigo-700">
         Geo-Analytics: SSL Sites
       </h1>
-      <h4>Selected Site</h4>
+
       {selectedName && (
-        <div className="hover:bg-accent/50 transition-colors w-[250px]">
-          <Link href={`/ssl/vitals/${selectedName}`}>
-            <Input
-              className="cursor-pointer"
-              placeholder="Selected Site"
-              value={selectedName}
-              disabled={!selectedName}
-            ></Input>
+        <div className="hover:bg-accent/50 transition-colors w-[250px] flex flex-row  ">
+          <Link href={`/ssl/vitals/${selectedName}`} target="_blank">
+            <Button>Goto SiteVitals</Button>
           </Link>
         </div>
       )}

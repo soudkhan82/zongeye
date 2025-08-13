@@ -2,7 +2,7 @@ import { getActionById } from "@/app/actions/tasks";
 import ErrorMessage from "@/components/ui/error-message";
 
 import React from "react";
-
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActionItem } from "@/interfaces";
 
@@ -53,6 +53,22 @@ async function TaskDetailsPage({ params }: Props) {
             <span className="font-semi-bold text-blue-500">NOMC Feedback </span>{" "}
             {actionitem.nomc_feedback}
           </p>
+          {actionitem.image ? (
+            <div className="relative w-full aspect-[16/9] bg-gray-50">
+              <Image
+                src={actionitem.image}
+                alt={actionitem.title ?? "Action image"}
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="object-cover"
+                priority
+              />
+            </div>
+          ) : (
+            <div className="w-full aspect-[16/9] bg-gray-50 flex items-center justify-center text-gray-400 text-sm">
+              No image provided
+            </div>
+          )}
           <p>
             <span className="font-semi-bold text-blue-500">
               Lead Department{" "}

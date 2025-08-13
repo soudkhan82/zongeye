@@ -31,7 +31,6 @@ export const ActionItemformSchema = z.object({
   target_timeline: z.string(),
   Tagged_departments: z.array(z.string()).min(1, "At least one department"),
   lead_department: z.string(),
-
   ActionType: z.string(),
   region: z.string(),
   description: z.string(),
