@@ -25,7 +25,6 @@ import { getSubRegions } from "../actions/rt";
 import { fetchSslSites, getGrids, getDistricts } from "@/app/actions/ssl";
 import SSlMap, { MapHandle } from "../gis/components/sslMap";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
 export default function SslPage() {
   const [subregion, setSubregion] = useState<string>("");
