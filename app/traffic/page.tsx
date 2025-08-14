@@ -1,11 +1,13 @@
 // app/traffic/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchSitesWithTraffic, type TrafficRow } from "@/app/actions/traffic";
 import { getSubregions, getDistricts, getGrids } from "@/app/actions/filters";
 import maplibregl from "maplibre-gl";
-import Map, { Marker, Popup } from "react-map-gl/maplibre";
+
+import Map, { Marker, Popup, MapRef } from "react-map-gl/maplibre";
+
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // Shadcn UI
@@ -49,15 +51,41 @@ export default function TrafficPage() {
 
   const [rows, setRows] = useState<TrafficRow[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [selectedName, setSelectedName] = useState<string>("");
   const [viewState, setViewState] = useState({
     latitude: 30.3753,
     longitude: 69.3451,
     zoom: 5,
   });
+
+  // NEW: Map ref for programmatic camera control
+  const mapRef = useRef<MapRef | null>(null);
+
+  const onRowClick = (p: TrafficRow) => {
+    setSelectedName(p.Name);
+
+    // If the row has coordinates, fly to it and show popup
+    if (p.Latitude != null && p.Longitude != null) {
+      mapRef.current?.flyTo({
+        center: [p.Longitude, p.Latitude],
+        zoom: Math.max(viewState.zoom, 11),
+        speed: 1.2, // lower = slower
+        curve: 1.42,
+        essential: true,
+      });
+
+      setHovered({
+        lat: p.Latitude,
+        lng: p.Longitude,
+        row: p,
+      });
+    }
+  };
+
   const fmt = (n: number | null | undefined) =>
     n == null ? "-" : Math.round(n).toLocaleString();
-  // Load subregions once
+
+  // Load subregions once to seed list (keeping your "North-1" default)
   useEffect(() => {
     (async () => {
       const list = await getSubregions();
@@ -65,7 +93,7 @@ export default function TrafficPage() {
     })();
   }, []);
 
-  // SubRegions
+  // SubRegions (ensure a valid default)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -81,7 +109,7 @@ export default function TrafficPage() {
     };
   }, []);
 
-  //Disrict
+  // District
   useEffect(() => {
     if (!subregion) return;
     let cancelled = false;
@@ -98,7 +126,7 @@ export default function TrafficPage() {
     };
   }, [subregion]);
 
-  //Disrict
+  // Grid
   useEffect(() => {
     let cancelled = false;
     if (!district) {
@@ -118,6 +146,7 @@ export default function TrafficPage() {
   }, [district, subregion]);
 
   const fetchNow = async () => {
+    setSelectedName("");
     setLoading(true);
     try {
       const data = await fetchSitesWithTraffic({
@@ -284,8 +313,9 @@ export default function TrafficPage() {
           </CardHeader>
           <CardContent className="h-[460px]">
             <Map
+              ref={mapRef} // <-- attach the ref
               mapLib={maplibregl}
-              mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+              mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
               style={{ width: "100%", height: "100%" }}
               {...viewState}
               onMove={(evt) => setViewState(evt.viewState)}
@@ -341,6 +371,12 @@ export default function TrafficPage() {
                           {fmt(hovered.row.data_total)}
                         </span>
                       </div>
+                      <div>
+                        SiteClassification:{""}
+                        <span className="font-medium">
+                          <b>{hovered.row.SiteClassification}</b>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </Popup>
@@ -352,6 +388,17 @@ export default function TrafficPage() {
         <Card className="h-[520px]">
           <CardHeader>
             <CardTitle>Results ({rows.length})</CardTitle>
+            <div className="flex flex-row justify-between">
+              <p>{selectedName}</p>
+
+              {selectedName && (
+                <div className="hover:bg-accent/50 transition-colors w-[250px] flex flex-row">
+                  <Link href={`/ssl/vitals/${selectedName}`} target="_blank">
+                    <Button>Goto SiteVitals</Button>
+                  </Link>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="h-[460px] overflow-y-auto">
             <Table>
@@ -368,11 +415,12 @@ export default function TrafficPage() {
               </TableHeader>
               <TableBody>
                 {rows.map((r) => (
-                  <TableRow key={r.Name}>
-                    <Link href={`/ssl/vitals/${r.Name}`}>
-                      <TableCell className="font-medium">{r.Name}</TableCell>
-                    </Link>
-
+                  <TableRow
+                    className="cursor-pointer hover:bg-accent/50 transition-colors"
+                    key={r.Name}
+                    onClick={() => onRowClick(r)}
+                  >
+                    <TableCell className="font-medium">{r.Name}</TableCell>
                     <TableCell>{r.SubRegion}</TableCell>
                     <TableCell>{r.District ?? "-"}</TableCell>
                     <TableCell>{r.Grid ?? "-"}</TableCell>

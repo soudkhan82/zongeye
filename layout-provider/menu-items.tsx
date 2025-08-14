@@ -56,14 +56,14 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
       icon: <Map size={16} />,
     },
     {
-      title: "Revenue Traffic",
-      route: "/rt",
+      title: "Traffic Analysis",
+      route: "/traffic",
       icon: <Map size={16} />,
     },
 
     {
-      title: "Availability",
-      route: "/avail",
+      title: "Home",
+      route: "/home",
       icon: <Network size={16} />,
     },
     // {
