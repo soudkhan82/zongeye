@@ -2,8 +2,8 @@
 
 import { getAvailabilityBySite } from "@/app/actions/avail";
 import { AvailabilityPoint, siteVitals } from "@/interfaces";
-import MapView from "../../components/mapview";
 import { get_site_vitals_by_site } from "@/app/actions/ssl";
+import SiteStatsView from "../../components/SiteStatsView";
 
 export default async function VitalsPage({
   params,
@@ -15,5 +15,5 @@ export default async function VitalsPage({
   const avail: AvailabilityPoint[] = await getAvailabilityBySite(siteName);
   const vitals: siteVitals[] = await get_site_vitals_by_site(siteName);
 
-  return <MapView avail={avail} vitals={vitals} title={siteName} />;
+  return <SiteStatsView avail={avail} vitals={vitals} title={siteName} />;
 }

@@ -112,7 +112,13 @@ const CHARTS: ChartSpec[] = [
   },
 ];
 
-function UniformAreaChart({ data, spec }: { data: siteVitals[]; spec: ChartSpec }) {
+function UniformAreaChart({
+  data,
+  spec,
+}: {
+  data: siteVitals[];
+  spec: ChartSpec;
+}) {
   return (
     <Card className="p-4">
       <h3 className="text-sm font-semibold mb-2">{spec.title}</h3>
@@ -143,7 +149,7 @@ function UniformAreaChart({ data, spec }: { data: siteVitals[]; spec: ChartSpec 
   );
 }
 
-export default function MapView({
+export default function SiteStatsView({
   avail,
   vitals,
   title,

@@ -61,6 +61,7 @@ export default function HomePge() {
             {
               title: "Intuitive Visualizations",
               desc: "World-class contemporary UI Visuals with interactive controls",
+              route: "/traffic",
             },
             {
               title: "Geospatial Network 16+ Sites",

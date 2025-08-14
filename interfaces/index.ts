@@ -232,3 +232,6 @@ export interface siteVitals {
   MFULDataRev: number;
   MFULTotalRev: number;
 }
+
+//final and clean version for traffic
+
