@@ -16,6 +16,7 @@ function LayoutProvider({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/avail") ||
     pathname.startsWith("/gis") ||
     pathname.startsWith("/rt") ||
+    pathname.startsWith("/traffic") ||
     pathname.startsWith("/ssl");
 
   if (isPrivate) {
