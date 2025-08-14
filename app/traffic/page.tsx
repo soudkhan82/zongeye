@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Link from "next/link";
 
 type Range = { min: number; max: number };
 
@@ -39,9 +40,9 @@ export default function TrafficPage() {
     lng: number;
     row: TrafficRow;
   } | null>(null);
-  const [subregion, setSubregion] = useState<string>("ALL");
-  const [district, setDistrict] = useState<string>("ALL");
-  const [grid, setGrid] = useState<string>("ALL");
+  const [subregion, setSubregion] = useState<string>("North-1");
+  const [district, setDistrict] = useState<string>("");
+  const [grid, setGrid] = useState<string>("");
 
   const [voiceRange, setVoiceRange] = useState<Range>({ min: 0, max: 100000 });
   const [dataRange, setDataRange] = useState<Range>({ min: 0, max: 100000 });
@@ -64,38 +65,65 @@ export default function TrafficPage() {
     })();
   }, []);
 
-  // On subregion change: refresh districts & grids
+  // SubRegions
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const d = await getDistricts(subregion === "ALL" ? "" : subregion);
-      setDistricts(["ALL", ...d]);
-      setDistrict("ALL");
-
-      const g = await getGrids(subregion === "ALL" ? "" : subregion, null);
-      setGrids(["ALL", ...g]);
-      setGrid("ALL");
+      const list = await getSubregions();
+      if (cancelled) return;
+      setSubregions(list);
+      if (list.length && !list.includes("North-1")) {
+        setSubregion(list[0]); // fallback if "North-1" doesn’t exist
+      }
     })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  //Disrict
+  useEffect(() => {
+    if (!subregion) return;
+    let cancelled = false;
+    (async () => {
+      const d = await getDistricts(subregion);
+      if (cancelled) return;
+      setDistricts(d);
+      setDistrict(""); // user must pick a district
+      setGrids([]); // reset grids because district changed
+      setGrid(""); // no default
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [subregion]);
 
-  // On district change: refresh grids scoped to district
+  //Disrict
   useEffect(() => {
+    let cancelled = false;
+    if (!district) {
+      setGrids([]);
+      setGrid("");
+      return;
+    }
     (async () => {
-      const g = await getGrids(
-        subregion === "ALL" ? "" : subregion,
-        district === "ALL" ? null : district
-      );
-      setGrids(["ALL", ...g]);
-      setGrid("ALL");
+      const g = await getGrids(subregion, district);
+      if (cancelled) return;
+      setGrids(g);
+      setGrid(""); // user must pick a grid (still optional in fetch)
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [district, subregion]);
 
   const fetchNow = async () => {
     setLoading(true);
     try {
       const data = await fetchSitesWithTraffic({
-        subregion: subregion === "ALL" ? null : subregion,
-        district: district === "ALL" ? null : district,
-        grid: grid === "ALL" ? null : grid,
+        subregion,
+        district: district || null,
+        grid: grid || null,
         voiceRange,
         dataRange,
       });
@@ -341,7 +369,10 @@ export default function TrafficPage() {
               <TableBody>
                 {rows.map((r) => (
                   <TableRow key={r.Name}>
-                    <TableCell className="font-medium">{r.Name}</TableCell>
+                    <Link href={`/ssl/vitals/${r.Name}`}>
+                      <TableCell className="font-medium">{r.Name}</TableCell>
+                    </Link>
+
                     <TableCell>{r.SubRegion}</TableCell>
                     <TableCell>{r.District ?? "-"}</TableCell>
                     <TableCell>{r.Grid ?? "-"}</TableCell>
