@@ -12,7 +12,9 @@ function Header() {
   return (
     <div>
       <div className="bg-primary p-5  text-white flex justify-between items-center">
-        <h1 className="text-2xl">ZONG EYE</h1>
+        <h1 className="text-3xl font-bold text-green-400 [text-shadow:_0_0_10px_rgb(34_197_94)]">
+          Zong <span className="text-white">EYE</span>
+        </h1>
         <div className="flex gap-5">
           <h1 className="text-sm">{user?.name}</h1>
 

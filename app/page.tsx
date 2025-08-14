@@ -2,6 +2,7 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import GeoBackground from "./components/geobackground";
 import { z } from "zod";
 import {
   Form,
@@ -65,8 +66,8 @@ function LandingPage() {
   }
 
   return (
-    <div>
-      <div className="text-3xl flex justify-center">Welcome to Zong EYE</div>
+    <div className="relative min-h-screen">
+      <GeoBackground />
       <div className="auth-bg">
         <div className="bg-white p-5 rounded-sm-w-[400px]">
           <h1 className="font-bold">Login to your acount</h1>

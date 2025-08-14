@@ -7,11 +7,7 @@ import Link from "next/link";
 export default function HomePge() {
   return (
     <div className="flex flex-col">
-      <div className="flex justify-between items-center bg-gray-200 py-5 px-20">
-        <h1 className="text-3xl font-bold text-green-400 [text-shadow:_0_0_10px_rgb(34_197_94)]">
-          Zong <span className="text-white">EYE</span>
-        </h1>
-      </div>
+      <div className="flex justify-between items-center bg-gray-200 py-5 px-20"></div>
       <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-900">
         {/* Hero Section */}
         <div className="container mx-auto px-4 py-16 flex flex-col md:flex-row items-center gap-10">

@@ -85,3 +85,51 @@ export async function get_site_vitals_by_site(
 
   return data;
 }
+
+export type SslRow = {
+  Name: string;
+  SiteClassification:
+    | "Platinum"
+    | "Gold"
+    | "Strategic"
+    | "Silver"
+    | "Bronze"
+    | null;
+  SubRegion: string | null;
+  Region: string | null;
+  Latitude: number | null;
+  Longitude: number | null;
+  District: string | null;
+  Grid: string | null;
+};
+
+export type ClassCount = {
+  name: "Platinum" | "Gold" | "Strategic" | "Silver" | "Bronze";
+  value: number;
+};
+
+export type SubregionBucket = { subregion: string | null; value: number };
+
+export async function getSslDashboard(region?: string | null): Promise<{
+  sites: SslRow[];
+  classCounts: ClassCount[];
+  subregionCounts: SubregionBucket[];
+}> {
+  const p_region = region ?? null;
+
+  const [sitesRes, classRes, subRes] = await Promise.all([
+    supabase.rpc("fetch_ssl_sites", { p_region }),
+    supabase.rpc("fetch_ssl_class_counts", { p_region }),
+    supabase.rpc("fetch_ssl_subregion_counts", { p_region }),
+  ]);
+
+  if (sitesRes.error) throw sitesRes.error;
+  if (classRes.error) throw classRes.error;
+  if (subRes.error) throw subRes.error;
+
+  return {
+    sites: (sitesRes.data ?? []) as SslRow[],
+    classCounts: (classRes.data ?? []) as ClassCount[],
+    subregionCounts: (subRes.data ?? []) as SubregionBucket[],
+  };
+}

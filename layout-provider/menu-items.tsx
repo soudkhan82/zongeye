@@ -50,6 +50,12 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
     //   route: "/corporate/dashboard",
     //   icon: <ChartPie size={14} />,
     // },
+
+    {
+      title: "Home",
+      route: "/home",
+      icon: <Network size={16} />,
+    },
     {
       title: "Geographical Information Sys",
       route: "/ssl",
@@ -60,12 +66,12 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
       route: "/traffic",
       icon: <Map size={16} />,
     },
-
     {
-      title: "Home",
-      route: "/home",
-      icon: <Network size={16} />,
+      title: "Live Network Dashboard",
+      route: "/ssl/Dashboard",
+      icon: <Map size={16} />,
     },
+
     // {
     //   title: "Add Ticket",
     //   route: "/corporate/tickets/add",

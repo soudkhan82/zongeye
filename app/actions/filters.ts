@@ -26,3 +26,11 @@ export async function getGrids(
   if (error) throw new Error(error.message);
   return (data ?? []).map((r: { Grid: string }) => r.Grid);
 }
+
+export async function get_regions(): Promise<string[]> {
+  const { data, error } = await supabase.rpc("fetch_regions");
+  if (error) throw error;
+
+  // data: Array<{ region: string }>
+  return (data ?? []).map((r: { region: string }) => r.region);
+}
