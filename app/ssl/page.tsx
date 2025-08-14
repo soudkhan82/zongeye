@@ -21,13 +21,14 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { sslSite } from "@/interfaces";
-import { getSubRegions } from "../actions/rt";
+
 import { fetchSslSites, getGrids, getDistricts } from "@/app/actions/ssl";
 import SSlMap, { MapHandle } from "../gis/components/sslMap";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getSubregions } from "../actions/filters";
 export default function SslPage() {
-  const [subregion, setSubregion] = useState<string>("");
+  const [subregion, setSubregion] = useState<string>("North-1");
   const [grid, setGrid] = useState<string | null>(null);
   const [district, setDistrict] = useState<string | null>(null);
   const mapRef = useRef<MapHandle>(null);
@@ -55,7 +56,13 @@ export default function SslPage() {
 
   // load subregions once
   useEffect(() => {
-    getSubRegions().then(setSubregions).catch(console.error);
+    (async () => {
+      const list = await getSubregions(); // string[]
+      setSubregions(list); // ✅ array -> array state
+      if (!list.includes("North-1") && list.length > 0) {
+        setSubregion(list[0]); // ✅ single -> string state
+      }
+    })();
   }, []);
 
   // when subregion changes, clear optional filters and reload their options
