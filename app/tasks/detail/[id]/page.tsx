@@ -54,7 +54,7 @@ async function TaskDetailsPage({ params }: Props) {
             {actionitem.nomc_feedback}
           </p>
           {actionitem.image ? (
-            <img src={actionitem.image} alt="" className="w-128 mt-2"></img>
+            <img src={actionitem.image} alt="" className="w-175 mt-2"></img>
           ) : (
             <div className="w-full aspect-[16/9] bg-gray-50 flex items-center justify-center text-gray-400 text-sm">
               No image provided
