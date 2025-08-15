@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import DataMap from "@/app/gis/components/DataHeatMap";
+
 import DataHeatmap from "@/app/gis/components/DataHeatMap";
 function DataTrafficPage() {
   const [stats, setStats] = useState<DataStats | null>(null);

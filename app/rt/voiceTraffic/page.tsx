@@ -23,7 +23,7 @@ import {
 import { getSubregions } from "@/app/actions/filters";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import VoiceMap from "@/app/gis/components/VoiceHeatMap";
+
 import {
   fetchVoiceStats,
   fetchVoiceTraffic,

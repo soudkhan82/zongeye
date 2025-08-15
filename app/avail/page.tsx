@@ -36,7 +36,7 @@ import {
   getTop10Districts,
 } from "../actions/avail";
 
-import { get_regions, getSubregions } from "../actions/filters";
+import { getSubregions } from "../actions/filters";
 
 export default function AvailabilityPage() {
   const [subregions, setSubregions] = useState<string[]>([]);
