@@ -2,7 +2,7 @@ import { getActionById } from "@/app/actions/tasks";
 import ErrorMessage from "@/components/ui/error-message";
 
 import React from "react";
-import Image from "next/image";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActionItem } from "@/interfaces";
 
