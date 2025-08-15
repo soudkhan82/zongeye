@@ -263,7 +263,7 @@ export default function SslDashboardPage() {
                             "Silver",
                             "Bronze",
                           ] as const
-                        ).includes(p.SiteClassification as any)
+                        ).includes(p.SiteClassification)
                           ? (
                               {
                                 Platinum: "#60A5FA",
