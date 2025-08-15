@@ -54,16 +54,7 @@ async function TaskDetailsPage({ params }: Props) {
             {actionitem.nomc_feedback}
           </p>
           {actionitem.image ? (
-            <div className="relative w-full aspect-[16/9] bg-gray-50">
-              <Image
-                src={actionitem.image}
-                alt={actionitem.title ?? "Action image"}
-                fill
-                sizes="(max-width: 768px) 100vw, 768px"
-                className="object-cover"
-                priority
-              />
-            </div>
+            <img src={actionitem.image} alt="" className="w-128 mt-2"></img>
           ) : (
             <div className="w-full aspect-[16/9] bg-gray-50 flex items-center justify-center text-gray-400 text-sm">
               No image provided
