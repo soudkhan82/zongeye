@@ -303,7 +303,7 @@ export default function DataHeatmap({ points, initialView }: Props) {
           >
             <div className="text-sm space-y-1">
               <div className="font-semibold">{selected.props.name}</div>
-              <div>Total Voice (Erl): {selected.props.weight}</div>
+              <div>Total Data (GB): {selected.props.weight}</div>
               {selected.props.siteclassification && (
                 <div>Class: {selected.props.siteclassification}</div>
               )}
