@@ -213,13 +213,6 @@ function MenuItems({
               <span className="text-gray-400">({user?.role ?? "guest"})</span>
             </div>
             <div className="mt-3 flex gap-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => toast("Preferences coming soon")}
-              >
-                Preferences
-              </Button>
               <Button className="w-full" onClick={onLogout}>
                 Logout
               </Button>
