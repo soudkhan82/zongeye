@@ -20,15 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getSubRegions } from "@/app/actions/rt";
+import { getSubregions } from "@/app/actions/filters";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import VoiceMap from "@/app/gis/components/VoiceMap";
+import VoiceMap from "@/app/gis/components/VoiceHeatMap";
 import {
   fetchVoiceStats,
   fetchVoiceTraffic,
   getDistricts,
 } from "@/app/actions/rt";
+import VoiceHeatmap from "@/app/gis/components/VoiceHeatMap";
 
 //Helper function to compute statistics
 
@@ -54,7 +55,7 @@ export default function VoiceTrafficPage() {
   }, [selectedSubRegion]);
 
   useEffect(() => {
-    getSubRegions().then(setSubregionOptions);
+    getSubregions().then(setSubregionOptions);
   }, []);
 
   useEffect(() => {
@@ -218,7 +219,7 @@ export default function VoiceTrafficPage() {
         </Card>
         {/* Map */}
         <Card className="w-full h-[400px]">
-          <VoiceMap points={sites} />
+          <VoiceHeatmap points={sites} />
         </Card>
       </div>
     </div>

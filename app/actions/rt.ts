@@ -11,12 +11,7 @@ import supabase from "../config/supabase-config";
 //   }
 //   return data.map((d: { distict: string }) => d.distict);
 // }
-export async function getSubRegions() {
-  const { data, error } = await supabase.rpc("get_subregions");
-  if (error) throw new Error(error.message);
 
-  return data.map((d: { subregion: string }) => d.subregion);
-}
 export async function getDistricts(subregion?: string): Promise<string[]> {
   let q = supabase.from("ssl").select("District").not("District", "is", null);
 

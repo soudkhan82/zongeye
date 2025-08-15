@@ -3,8 +3,8 @@ import {
   fetchDataStats,
   fetchDataTraffic,
   getDistricts,
-  getSubRegions,
 } from "@/app/actions/rt";
+import { getSubregions } from "@/app/actions/filters";
 import { DataStats, DataTraffic } from "@/interfaces";
 import React, { useEffect, useState } from "react";
 import {
@@ -24,7 +24,8 @@ import {
 } from "@/components/ui/select";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import DataMap from "@/app/gis/components/DataMap";
+import DataMap from "@/app/gis/components/DataHeatMap";
+import DataHeatmap from "@/app/gis/components/DataHeatMap";
 function DataTrafficPage() {
   const [stats, setStats] = useState<DataStats | null>(null);
   const [sites, setSites] = useState<DataTraffic[]>([]);
@@ -46,7 +47,7 @@ function DataTrafficPage() {
   }, [selectedSubRegion]);
 
   useEffect(() => {
-    getSubRegions().then(setSubregionOptions);
+    getSubregions().then(setSubregionOptions);
   }, []);
   useEffect(() => {
     let cancelled = false;
@@ -201,7 +202,7 @@ function DataTrafficPage() {
         </Card>
         {/* Map */}
         <Card className="w-full h-[400px]">
-          <DataMap points={sites} />
+          <DataHeatmap points={sites}/>
         </Card>
       </div>
     </div>

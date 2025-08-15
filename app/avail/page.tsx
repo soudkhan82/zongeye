@@ -36,8 +36,7 @@ import {
   getTop10Districts,
 } from "../actions/avail";
 
-import { getSubRegions } from "../actions/rt";
-
+import { get_regions, getSubregions } from "../actions/filters";
 
 export default function AvailabilityPage() {
   const [subregions, setSubregions] = useState<string[]>([]);
@@ -56,7 +55,8 @@ export default function AvailabilityPage() {
   const [bottomData, setBottomData] = useState([]);
 
   useEffect(() => {
-    getSubRegions().then(setSubregions);
+    // getSubRegions().then(setSubregions);
+    getSubregions().then(setSubregions);
   }, []);
 
   useEffect(() => {

@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import {
   ChartPie,
   FileDown,
-  MailSearch,
+
   Map,
   MapPinHouseIcon,
   Network,
@@ -71,7 +71,16 @@ function MenuItems({ openMenuItems, setOpenMenuItems }: MenuItemsProps) {
       route: "/ssl/Dashboard",
       icon: <Map size={16} />,
     },
-
+    {
+      title: "Network Availability",
+      route: "/avail",
+      icon: <Newspaper size={16} />,
+    },
+    {
+      title: "Voice & Data Heatmaps",
+      route: "/rt",
+      icon: <Newspaper size={16} />,
+    },
     // {
     //   title: "Add Ticket",
     //   route: "/corporate/tickets/add",

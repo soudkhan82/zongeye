@@ -2,7 +2,7 @@ export default function Page() {
   const cards = [
     {
       title: "Voice Traffic ",
-      subtitle: "Explore clusters, hotspots, and trends",
+      subtitle: "Directional Congestional Patterns",
       href: "/rt/voiceTraffic",
       img: "https://www.researchgate.net/profile/Yang-Li-162/publication/342059044/figure/fig8/AS:902280238280704@1592202012901/Traffic-heat-map-of-Beijing.png",
       badge: "Voice",
@@ -12,17 +12,9 @@ export default function Page() {
       title: "Data Traffic",
       subtitle: "Directional congestion patterns",
       href: "/rt/dataTraffic",
-      img: "https://www.researchgate.net/profile/Sattar-Khan/publication/330420317/figure/fig2/AS:717259613257728@1547701429295/A-heat-map-matrix-visualization-for-traffic-congestion-analysis-21.png",
-      badge: "GIS",
+      img: "heatmap.jpg",
+      badge: "Data",
       chips: ["Rasters & tiles", "Sites & sectors", "Subregion filter"],
-    },
-    {
-      title: "3D Telecom Traffic Time‑Series",
-      subtitle: "Peaks & valleys over 21 days",
-      href: "",
-      img: "https://tse2.mm.bing.net/th/id/OIP.lAQ0xNO0-Wl_YWcnOiYF1wHaE3?pid=Api",
-      badge: "3D",
-      chips: ["Time series", "Weather overlay", "Udine case"],
     },
   ];
 
