@@ -281,7 +281,7 @@ export default function DataHeatmap({ points, initialView }: Props) {
           >
             <div className="text-xs">
               <div className="font-semibold">{hoverInfo.props.name}</div>
-              <div>Total Voice (Erl): {hoverInfo.props.weight}</div>
+              <div>Total Data (GB): {hoverInfo.props.weight}</div>
               {hoverInfo.props.district && (
                 <div>District: {hoverInfo.props.district}</div>
               )}
