@@ -7,8 +7,8 @@ import Link from "next/link";
 export default function HomePge() {
   return (
     <div className="flex flex-col">
-      <div className="flex justify-between items-center bg-gray-200 py-5 px-20"></div>
-      <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-900">
+      <div className="flex justify-between items-center  py-5 px-20"></div>
+      <main className="flex flex-col items-center justify-center min-h-screen text-gray-900">
         {/* Hero Section */}
         <div className="container mx-auto px-4 py-16 flex flex-col md:flex-row items-center gap-10">
           {/* Text Content */}
@@ -47,12 +47,12 @@ export default function HomePge() {
 
         {/* Features Section */}
 
-        <section className="container mx-auto px-4 py-12 grid md:grid-cols-3 gap-8 text-center">
+        <section className="container mx-auto px-4 py-12 grid md:grid-cols-3 gap-8 text-center bg-gray-300">
           {[
             {
-              title: "Geographical Information System",
+              title: "Live Network Dashboard",
               desc: "Blazing fast with Server Side Rendering (SSR).",
-              route: "/rt",
+              route: "/ssl/Dashboard",
             },
             {
               title: "Intuitive Visualizations",
@@ -60,8 +60,8 @@ export default function HomePge() {
               route: "/traffic",
             },
             {
-              title: "Geospatial Network 16+ Sites",
-              desc: "An internative geographical visualization of the networ",
+              title: "Interactive Geospatial Analysis",
+              desc: "Blazing fast with Server Side Rendering (SSR)",
               route: "/ssl",
             },
           ].map((feature, index) => (

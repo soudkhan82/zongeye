@@ -67,7 +67,6 @@ function LandingPage() {
 
   return (
     <div className="relative min-h-screen">
-      <GeoBackground />
       <div className="auth-bg">
         <div className="bg-white p-5 rounded-sm-w-[400px]">
           <h1 className="font-bold">Login to your acount</h1>
