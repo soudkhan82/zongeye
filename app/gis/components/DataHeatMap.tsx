@@ -1,3 +1,4 @@
+// DataHeatMap.tsx
 "use client";
 
 import * as React from "react";
@@ -5,21 +6,10 @@ import Map, { Layer, Source, MapRef, Popup, type MapLib } from "react-map-gl";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Feature, FeatureCollection, Point } from "geojson";
-import type { Map as MapboxMap } from "mapbox-gl"; // TS expects Mapbox types
+import type { Map as MapboxMap } from "mapbox-gl";
 import { DataTraffic } from "@/interfaces";
 
-export interface VoiceHeatPoint {
-  name: string;
-  latitude: number;
-  longitude: number;
-  data3gtraffic: number;
-  data4gtraffic: number;
-  district?: string;
-  subregion?: string;
-  siteclassification?: string;
-  address?: string;
-}
-
+// ---------- types ----------
 type DataProps = {
   name: string;
   weight: number;
@@ -28,18 +18,76 @@ type DataProps = {
   siteclassification?: string;
   address?: string;
 };
-
 type DataFeature = Feature<Point, DataProps>;
+
+export type DataMapHandle = {
+  flyTo: (lng: number, lat: number, zoom?: number) => void;
+  fitToPoints: (padding?: number) => void;
+};
 
 interface Props {
   points: DataTraffic[];
   initialView?: { longitude: number; latitude: number; zoom: number };
+  focusZoom?: number; // default 15.5
 }
 
-export default function DataHeatmap({ points, initialView }: Props) {
+// ---------- helpers ----------
+function boundsFromCoords(coords: [number, number][]) {
+  let minLng = Infinity,
+    minLat = Infinity,
+    maxLng = -Infinity,
+    maxLat = -Infinity;
+  for (const [lng, lat] of coords) {
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue;
+    if (lng < minLng) minLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lng > maxLng) maxLng = lng;
+    if (lat > maxLat) maxLat = lat;
+  }
+  if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) return null;
+  if (minLng === maxLng && minLat === maxLat) {
+    const pad = 0.01;
+    return [
+      [minLng - pad, minLat - pad],
+      [maxLng + pad, maxLat + pad],
+    ] as [[number, number], [number, number]];
+  }
+  return [
+    [minLng, minLat],
+    [maxLng, maxLat],
+  ] as [[number, number], [number, number]];
+}
+
+// ---------- component ----------
+const DataHeatmap = React.forwardRef<DataMapHandle, Props>(function DataHeatmap(
+  { points, initialView, focusZoom = 15.5 },
+  ref
+) {
   const mapRef = React.useRef<MapRef | null>(null);
 
-  // Build GeoJSON (weight = 2G + 3G + VoLTE)
+  // imperative API
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      flyTo: (lng: number, lat: number, zoom = focusZoom) => {
+        const m = mapRef.current?.getMap();
+        if (!m) return;
+        m.flyTo({ center: [lng, lat], zoom, duration: 600, essential: true });
+      },
+      fitToPoints: (padding = 60) => {
+        const m = mapRef.current?.getMap();
+        if (!m) return;
+        const coords = geoCoords.current;
+        if (!coords.length) return;
+        const b = boundsFromCoords(coords);
+        if (!b) return;
+        m.fitBounds(b, { padding, duration: 600, maxZoom: 14 });
+      },
+    }),
+    [focusZoom]
+  );
+
+  // build geojson
   const geojson: FeatureCollection<Point, DataProps> = React.useMemo(() => {
     const features: DataFeature[] = (points ?? [])
       .filter(
@@ -51,7 +99,6 @@ export default function DataHeatmap({ points, initialView }: Props) {
       )
       .map((p) => {
         const weight = (p.data3gtraffic ?? 0) + (p.data4gtraffic ?? 0);
-
         return {
           type: "Feature",
           properties: {
@@ -62,60 +109,33 @@ export default function DataHeatmap({ points, initialView }: Props) {
             siteclassification: p.siteclassification,
             address: p.address,
           },
-          geometry: {
-            type: "Point",
-            coordinates: [p.longitude, p.latitude],
-          },
+          geometry: { type: "Point", coordinates: [p.longitude, p.latitude] },
         };
       });
-
     return { type: "FeatureCollection", features };
   }, [points]);
 
-  // Fit bounds (array form; no MapLibre classes)
+  // cache coords for fitToPoints
+  const geoCoords = React.useRef<[number, number][]>([]);
+  geoCoords.current = geojson.features
+    .filter((f) => f.geometry.type === "Point")
+    .map((f) => (f.geometry as Point).coordinates as [number, number]);
+
+  // auto-fit on data change
   React.useEffect(() => {
-    const map = mapRef.current?.getMap();
-    if (!map || geojson.features.length === 0) return;
-
-    const coords = geojson.features
-      .map((f) => f.geometry)
-      .filter((g): g is Point => g.type === "Point")
-      .map((g) => g.coordinates as [number, number]);
-
-    let minLng = Infinity,
-      minLat = Infinity,
-      maxLng = -Infinity,
-      maxLat = -Infinity;
-
-    for (const [lng, lat] of coords) {
-      if (lng < minLng) minLng = lng;
-      if (lat < minLat) minLat = lat;
-      if (lng > maxLng) maxLng = lng;
-      if (lat > maxLat) maxLat = lat;
-    }
-
-    if (coords.length === 1) {
-      const pad = 0.01;
-      minLng -= pad;
-      minLat -= pad;
-      maxLng += pad;
-      maxLat += pad;
-    }
-
-    const bounds: [[number, number], [number, number]] = [
-      [minLng, minLat],
-      [maxLng, maxLat],
-    ];
-    map.fitBounds(bounds, { padding: 40, duration: 500 });
+    const m = mapRef.current?.getMap();
+    if (!m || geoCoords.current.length === 0) return;
+    const b = boundsFromCoords(geoCoords.current);
+    if (!b) return;
+    m.fitBounds(b, { padding: 40, duration: 500, maxZoom: 14 });
   }, [geojson]);
 
-  // Hover + Click popup state (typed)
+  // hover / selection
   const [hoverInfo, setHoverInfo] = React.useState<{
     lng: number;
     lat: number;
     props: DataProps;
   } | null>(null);
-
   const [selected, setSelected] = React.useState<{
     lng: number;
     lat: number;
@@ -133,50 +153,47 @@ export default function DataHeatmap({ points, initialView }: Props) {
       <Map
         ref={mapRef}
         initialViewState={defaultView}
-        // MapLibre at runtime, cast to the Mapbox interface expected by react-map-gl
         mapLib={maplibregl as unknown as MapLib<MapboxMap>}
         style={{ width: "100%", height: "100%" }}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-        interactiveLayerIds={["voice-circles"]} // interactions on circle layer only
+        interactiveLayerIds={["data-circles"]}
         onClick={(e) => {
           const f = e.features?.[0];
-          if (!f) return;
-          const geom = f.geometry;
-          if (geom && geom.type === "Point") {
-            const coords = (geom as Point).coordinates as [number, number];
-            const props = f.properties as unknown as DataProps;
-            setSelected({
-              lng: e.lngLat.lng ?? coords[0],
-              lat: e.lngLat.lat ?? coords[1],
-              props,
-            });
-          }
+          if (!f || f.geometry.type !== "Point") return;
+          const coords = (f.geometry as Point).coordinates as [number, number];
+          const props = f.properties as unknown as DataProps;
+
+          const lng = e.lngLat.lng ?? coords[0];
+          const lat = e.lngLat.lat ?? coords[1];
+          setSelected({ lng, lat, props });
+
+          const m = mapRef.current?.getMap();
+          const currentZoom = m?.getZoom?.() ?? 10;
+          m?.flyTo({
+            center: [coords[0], coords[1]],
+            zoom: Math.max(currentZoom + 2, focusZoom),
+            duration: 600,
+            essential: true,
+          });
         }}
         onMouseMove={(e) => {
           const f = e.features?.[0];
-          if (!f) {
-            setHoverInfo(null);
-            return;
-          }
-          const geom = f.geometry;
-          if (geom && geom.type === "Point") {
-            const coords = (geom as Point).coordinates as [number, number];
-            const props = f.properties as unknown as DataProps;
-            setHoverInfo({
-              lng: e.lngLat.lng ?? coords[0],
-              lat: e.lngLat.lat ?? coords[1],
-              props,
-            });
-          }
+          if (!f || f.geometry.type !== "Point") return setHoverInfo(null);
+          const coords = (f.geometry as Point).coordinates as [number, number];
+          const props = f.properties as unknown as DataProps;
+          setHoverInfo({
+            lng: e.lngLat.lng ?? coords[0],
+            lat: e.lngLat.lat ?? coords[1],
+            props,
+          });
         }}
         onMouseLeave={() => setHoverInfo(null)}
       >
-        <Source id="voice-points" type="geojson" data={geojson}>
-          {/* Heatmap */}
+        <Source id="data-points" type="geojson" data={geojson}>
           <Layer
-            id="voice-heatmap"
+            id="data-heatmap"
             type="heatmap"
-            source="voice-points"
+            source="data-points"
             maxzoom={15}
             paint={{
               "heatmap-weight": [
@@ -230,12 +247,10 @@ export default function DataHeatmap({ points, initialView }: Props) {
               "heatmap-opacity": 0.9,
             }}
           />
-
-          {/* Circles at high zoom for precise interaction */}
           <Layer
-            id="voice-circles"
+            id="data-circles"
             type="circle"
-            source="voice-points"
+            source="data-points"
             minzoom={12}
             paint={{
               "circle-radius": [
@@ -269,7 +284,6 @@ export default function DataHeatmap({ points, initialView }: Props) {
           />
         </Source>
 
-        {/* Hover tooltip (hidden if a selection is open) */}
         {hoverInfo && !selected && (
           <Popup
             longitude={hoverInfo.lng}
@@ -292,7 +306,6 @@ export default function DataHeatmap({ points, initialView }: Props) {
           </Popup>
         )}
 
-        {/* Click popup */}
         {selected && (
           <Popup
             longitude={selected.lng}
@@ -322,4 +335,6 @@ export default function DataHeatmap({ points, initialView }: Props) {
       </Map>
     </div>
   );
-}
+});
+
+export default DataHeatmap;
