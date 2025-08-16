@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   fetchDataStats,
   fetchDataTraffic,
@@ -9,10 +9,19 @@ import { getSubregions } from "@/app/actions/filters";
 import { DataStats, DataTraffic } from "@/interfaces";
 
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -66,7 +75,9 @@ function DataTrafficPage() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedSubRegion, selDistrict]);
 
   function fmt(n: number | null | undefined, opts?: Intl.NumberFormatOptions) {
@@ -81,7 +92,10 @@ function DataTrafficPage() {
 
       <div className="w-full flex justify-start space-x-3">
         <Select
-          onValueChange={(v) => { setSelectedSubRegion(v); setselDistrict(undefined); }}
+          onValueChange={(v) => {
+            setSelectedSubRegion(v);
+            setselDistrict(undefined);
+          }}
           value={selectedSubRegion ?? ""}
         >
           <SelectTrigger className="w-64">
@@ -89,18 +103,25 @@ function DataTrafficPage() {
           </SelectTrigger>
           <SelectContent>
             {subregionOptions.map((sub) => (
-              <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+              <SelectItem key={sub} value={sub}>
+                {sub}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select onValueChange={(v) => setselDistrict(v)} value={selDistrict ?? ""}>
+        <Select
+          onValueChange={(v) => setselDistrict(v)}
+          value={selDistrict ?? ""}
+        >
           <SelectTrigger className="w-64">
             <SelectValue placeholder="Select district" />
           </SelectTrigger>
           <SelectContent>
             {districtoptions.map((d) => (
-              <SelectItem key={d} value={d}>{d}</SelectItem>
+              <SelectItem key={d} value={d}>
+                {d}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -108,11 +129,36 @@ function DataTrafficPage() {
 
       {sites.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          <Card className="bg-pink-100"><CardHeader><CardTitle>Distinct Sites</CardTitle></CardHeader><CardContent>{fmt(stats?.distinct_sites)}</CardContent></Card>
-          <Card className="bg-pink-100"><CardHeader><CardTitle>Average Data3G(GB)</CardTitle></CardHeader><CardContent>{fmt(stats?.avg_data3g)}</CardContent></Card>
-          <Card className="bg-pink-100"><CardHeader><CardTitle>Average Data4G(GB)</CardTitle></CardHeader><CardContent>{fmt(stats?.avg_data4g)}</CardContent></Card>
-          <Card className="bg-pink-100"><CardHeader><CardTitle>Total Data Revenue(PKR)</CardTitle></CardHeader><CardContent>{fmt(stats?.total_data_revenue)}</CardContent></Card>
-          <Card className="bg-pink-100"><CardHeader><CardTitle>Avg Data Revenue(PKR)</CardTitle></CardHeader><CardContent>{fmt(stats?.avg_data_revenue)}</CardContent></Card>
+          <Card className="bg-pink-100">
+            <CardHeader>
+              <CardTitle>Distinct Sites</CardTitle>
+            </CardHeader>
+            <CardContent>{fmt(stats?.distinct_sites)}</CardContent>
+          </Card>
+          <Card className="bg-pink-100">
+            <CardHeader>
+              <CardTitle>Average Data3G(GB)</CardTitle>
+            </CardHeader>
+            <CardContent>{fmt(stats?.avg_data3g)}</CardContent>
+          </Card>
+          <Card className="bg-pink-100">
+            <CardHeader>
+              <CardTitle>Average Data4G(GB)</CardTitle>
+            </CardHeader>
+            <CardContent>{fmt(stats?.avg_data4g)}</CardContent>
+          </Card>
+          <Card className="bg-pink-100">
+            <CardHeader>
+              <CardTitle>Total Data Revenue(PKR)</CardTitle>
+            </CardHeader>
+            <CardContent>{fmt(stats?.total_data_revenue)}</CardContent>
+          </Card>
+          <Card className="bg-pink-100">
+            <CardHeader>
+              <CardTitle>Avg Data Revenue(PKR)</CardTitle>
+            </CardHeader>
+            <CardContent>{fmt(stats?.avg_data_revenue)}</CardContent>
+          </Card>
         </div>
       )}
 
@@ -120,7 +166,9 @@ function DataTrafficPage() {
         {/* Table */}
         <Card className="w-full h-fit">
           <CardContent className="overflow-auto max-h-[400px]">
-            {loading && <div className="text-center text-gray-500">Loading...</div>}
+            {loading && (
+              <div className="text-center text-gray-500">Loading...</div>
+            )}
             <Table className="mt-4 bg-green-100 rounded-lg overflow-hidden">
               <TableHeader className="bg-gray-200">
                 <TableRow>
@@ -141,7 +189,11 @@ function DataTrafficPage() {
                     className="cursor-pointer hover:bg-gray-200"
                     onClick={() => {
                       // zoom map to clicked row
-                      mapRef.current?.flyTo(site.longitude, site.latitude, 15.5);
+                      mapRef.current?.flyTo(
+                        site.longitude,
+                        site.latitude,
+                        15.5
+                      );
                     }}
                   >
                     <TableCell>{site.name}</TableCell>
