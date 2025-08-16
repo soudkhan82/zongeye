@@ -187,6 +187,8 @@ export default function VoiceTrafficPage() {
                   <TableHead className="font-bold">Voice2G_E</TableHead>
                   <TableHead className="font-bold">Voice3G_E</TableHead>
                   <TableHead className="font-bold">VoLTE</TableHead>
+                  <TableHead className="font-bold">VoiceRev</TableHead>
+
                   <TableHead className="font-bold">Classification</TableHead>
                   <TableHead className="font-bold">District</TableHead>
                   <TableHead className="font-bold">SubRegion</TableHead>
@@ -207,6 +209,7 @@ export default function VoiceTrafficPage() {
                     <TableCell>{site.voice2gtraffic}</TableCell>
                     <TableCell>{site.voice3gtraffic}</TableCell>
                     <TableCell>{site.voltetraffic}</TableCell>
+                    <TableCell>fmt({site.voicerevenue})</TableCell>
                     <TableCell>{site.siteclassification}</TableCell>
                     <TableCell>{site.district}</TableCell>
                     <TableCell>{site.subregion}</TableCell>

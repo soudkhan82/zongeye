@@ -189,7 +189,7 @@ function DataTrafficPage() {
                     <TableCell>{site.name}</TableCell>
                     <TableCell>{site.data3gtraffic}</TableCell>
                     <TableCell>{site.data4gtraffic}</TableCell>
-                    <TableCell>{site.datarevenue}</TableCell>
+                    <TableCell>fmt({site.datarevenue})</TableCell>
                     <TableCell>{site.siteclassification}</TableCell>
                     <TableCell>{site.district}</TableCell>
                     <TableCell>{site.subregion}</TableCell>
@@ -202,7 +202,7 @@ function DataTrafficPage() {
         </Card>
         {/* Map */}
         <Card className="w-full h-[400px]">
-          <DataHeatmap points={sites}/>
+          <DataHeatmap points={sites} />
         </Card>
       </div>
     </div>
