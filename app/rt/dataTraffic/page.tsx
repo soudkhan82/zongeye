@@ -189,7 +189,7 @@ function DataTrafficPage() {
                     <TableCell>{site.name}</TableCell>
                     <TableCell>{site.data3gtraffic}</TableCell>
                     <TableCell>{site.data4gtraffic}</TableCell>
-                    <TableCell>fmt({site.datarevenue})</TableCell>
+                    <TableCell>{fmt(site.datarevenue)}</TableCell>
                     <TableCell>{site.siteclassification}</TableCell>
                     <TableCell>{site.district}</TableCell>
                     <TableCell>{site.subregion}</TableCell>

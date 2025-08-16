@@ -209,7 +209,7 @@ export default function VoiceTrafficPage() {
                     <TableCell>{site.voice2gtraffic}</TableCell>
                     <TableCell>{site.voice3gtraffic}</TableCell>
                     <TableCell>{site.voltetraffic}</TableCell>
-                    <TableCell>fmt({site.voicerevenue})</TableCell>
+                    <TableCell>{fmt(site.voicerevenue)}</TableCell>
                     <TableCell>{site.siteclassification}</TableCell>
                     <TableCell>{site.district}</TableCell>
                     <TableCell>{site.subregion}</TableCell>
