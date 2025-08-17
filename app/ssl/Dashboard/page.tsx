@@ -6,14 +6,11 @@ import {
   type ClassCount,
   type SslRow,
 } from "@/app/actions/ssl";
-// ← use your existing function
 
-// MapLibre
 import maplibregl from "maplibre-gl";
 import Map, { Marker, MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-// shadcn/ui
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -23,8 +20,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
-// recharts
 import {
   PieChart,
   Pie,
@@ -58,6 +56,7 @@ export default function SslDashboardPage() {
   >([]);
   const [sites, setSites] = useState<SslRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false); // ← gate real cards
 
   const mapRef = useRef<MapRef | null>(null);
   const [viewState, setViewState] = useState({
@@ -66,7 +65,7 @@ export default function SslDashboardPage() {
     zoom: 5,
   });
 
-  // load regions via your existing action
+  // load regions
   useEffect(() => {
     (async () => {
       try {
@@ -77,6 +76,10 @@ export default function SslDashboardPage() {
       }
     })();
   }, []);
+  const statText = (v: number | undefined | null) =>
+    typeof v === "number" ? v.toLocaleString() : "-";
+
+  // helper to render numbers only when fetched
 
   const fetchData = async () => {
     setLoading(true);
@@ -91,6 +94,7 @@ export default function SslDashboardPage() {
       console.error(e);
     } finally {
       setLoading(false);
+      setInitialized(true); // real cards only after first fetch completes
     }
   };
 
@@ -117,9 +121,10 @@ export default function SslDashboardPage() {
   }, [geoPoints]);
 
   const totalSites = sites.length;
+  const isReady = initialized && !loading;
 
   return (
-    <div className="flex flex-col gap-6 p-4">
+    <div className="flex flex-col gap-6 p-4" aria-busy={loading}>
       {/* header + filter */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold">SSL Dashboard</h1>
@@ -140,151 +145,195 @@ export default function SslDashboardPage() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="secondary" onClick={() => setRegion(undefined)}>
+
+          <Button
+            variant="secondary"
+            onClick={() => setRegion(undefined)}
+            disabled={loading}
+          >
             Clear Region
           </Button>
+
           <Button onClick={fetchData} disabled={loading}>
-            {loading ? "Loading..." : "Refresh"}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+              </span>
+            ) : (
+              "Refresh"
+            )}
           </Button>
         </div>
       </div>
 
-      {/* top cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {(["Platinum", "Gold", "Strategic", "Silver", "Bronze"] as const).map(
-          (c) => {
-            const val = classCounts.find((x) => x.name === c)?.value ?? 0;
-            return (
-              <Card key={c} className="shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{c}</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-semibold">
-                    {val.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-muted-foreground">sites</div>
-                </CardContent>
-              </Card>
-            );
-          }
-        )}
-      </div>
+      {/* ======= TOP: stats row ======= */}
+      {!isReady ? (
+        // No Card components during loading
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-[112px] w-full rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {(["Platinum", "Gold", "Strategic", "Silver", "Bronze"] as const).map(
+            (c) => {
+              const val = classCounts.find((x) => x.name === c)?.value ?? 0;
+              return (
+                <Card key={c} className="shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{c}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-3xl font-semibold">
+                      {statText(val)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">sites</div>
+                  </CardContent>
+                </Card>
+              );
+            }
+          )}
+        </div>
+      )}
 
-      {/* charts + map */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {/* Pie: by classification */}
-        <Card className="h-[380px]">
-          <CardHeader>
-            <CardTitle>By Site Classification</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={classCounts}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={95}
+      {/* ======= MIDDLE: charts + map ======= */}
+      {!isReady ? (
+        // Skeleton blocks only, no Cards
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <Skeleton className="h-[380px] w-full rounded-xl" />
+          <Skeleton className="h-[380px] w-full rounded-xl" />
+          <Skeleton className="h-[380px] w-full rounded-xl" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          {/* Pie: by classification */}
+          <Card className="h-[380px]">
+            <CardHeader>
+              <CardTitle>By Site Classification</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={classCounts}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={95}
+                  >
+                    {classCounts.map((entry) => (
+                      <Cell key={entry.name} fill={CLASS_COLORS[entry.name]} />
+                    ))}
+                  </Pie>
+                  <ReTooltip />
+                  <ReLegend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Bar: by subregion */}
+          <Card className="h-[380px]">
+            <CardHeader>
+              <CardTitle>Sites per SubRegion</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={subregionCounts.map((d) => ({
+                    subregion: d.subregion ?? "(blank)",
+                    value: d.value,
+                  }))}
                 >
-                  {classCounts.map((entry) => (
-                    <Cell key={entry.name} fill={CLASS_COLORS[entry.name]} />
-                  ))}
-                </Pie>
-                <ReTooltip />
-                <ReLegend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Bar: by subregion */}
-        <Card className="h-[380px]">
-          <CardHeader>
-            <CardTitle>Sites per SubRegion</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={subregionCounts.map((d) => ({
-                  // keep SQL clean (no coalesce); just render a label in UI for nulls
-                  subregion: d.subregion ?? "(blank)",
-                  value: d.value,
-                }))}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="subregion" hide={subregionCounts.length > 12} />
-                <YAxis allowDecimals={false} />
-                <ReTooltip />
-                <Bar dataKey="value" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Map */}
-        <Card className="h-[380px]">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle>Sites Map</CardTitle>
-              <div className="text-sm text-muted-foreground">
-                {totalSites.toLocaleString()} sites
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="h-[320px]">
-            <Map
-              ref={mapRef}
-              mapLib={maplibregl}
-              mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-              style={{ width: "100%", height: "100%" }}
-              {...viewState}
-              onMove={(evt) => setViewState(evt.viewState)}
-            >
-              {geoPoints.map((p) => (
-                <Marker
-                  key={`${p.Name}-${p.Latitude}-${p.Longitude}`}
-                  latitude={p.Latitude!}
-                  longitude={p.Longitude!}
-                  anchor="bottom"
-                >
-                  <div
-                    className="w-2.5 h-2.5 rounded-full border border-white shadow"
-                    style={{
-                      backgroundColor:
-                        p.SiteClassification &&
-                        (
-                          [
-                            "Platinum",
-                            "Gold",
-                            "Strategic",
-                            "Silver",
-                            "Bronze",
-                          ] as const
-                        ).includes(p.SiteClassification)
-                          ? (
-                              {
-                                Platinum: "#60A5FA",
-                                Gold: "#F59E0B",
-                                Strategic: "#22C55E",
-                                Silver: "#94A3B8",
-                                Bronze: "#B45309",
-                              } as const
-                            )[p.SiteClassification as keyof typeof CLASS_COLORS]
-                          : "#10B981",
-                    }}
-                    title={`${p.Name} • ${p.SiteClassification ?? ""} • ${
-                      p.SubRegion ?? ""
-                    }`}
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="subregion"
+                    hide={subregionCounts.length > 12}
                   />
-                </Marker>
-              ))}
-            </Map>
-          </CardContent>
-        </Card>
-      </div>
+                  <YAxis allowDecimals={false} />
+                  <ReTooltip />
+                  <Bar dataKey="value" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Map */}
+          <Card className="h-[380px]">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle>Sites Map</CardTitle>
+                <div className="text-sm text-muted-foreground">
+                  {totalSites.toLocaleString()} sites
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="h-[320px]">
+              <Map
+                ref={mapRef}
+                mapLib={maplibregl}
+                mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+                style={{ width: "100%", height: "100%" }}
+                {...viewState}
+                onMove={(evt) => setViewState(evt.viewState)}
+              >
+                {geoPoints.map((p) => (
+                  <Marker
+                    key={`${p.Name}-${p.Latitude}-${p.Longitude}`}
+                    latitude={p.Latitude!}
+                    longitude={p.Longitude!}
+                    anchor="bottom"
+                  >
+                    <div
+                      className="w-2.5 h-2.5 rounded-full border border-white shadow"
+                      style={{
+                        backgroundColor:
+                          p.SiteClassification &&
+                          (
+                            [
+                              "Platinum",
+                              "Gold",
+                              "Strategic",
+                              "Silver",
+                              "Bronze",
+                            ] as const
+                          ).includes(p.SiteClassification)
+                            ? (
+                                {
+                                  Platinum: "#60A5FA",
+                                  Gold: "#F59E0B",
+                                  Strategic: "#22C55E",
+                                  Silver: "#94A3B8",
+                                  Bronze: "#B45309",
+                                } as const
+                              )[
+                                p.SiteClassification as keyof typeof CLASS_COLORS
+                              ]
+                            : "#10B981",
+                      }}
+                      title={`${p.Name} • ${p.SiteClassification ?? ""} • ${
+                        p.SubRegion ?? ""
+                      }`}
+                    />
+                  </Marker>
+                ))}
+              </Map>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Optional floating hint */}
+      {loading && (
+        <div className="fixed bottom-4 right-4 pointer-events-none opacity-80">
+          <div className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 shadow border text-sm">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Fetching latest dashboard…
+          </div>
+        </div>
+      )}
     </div>
   );
 }
