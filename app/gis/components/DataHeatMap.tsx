@@ -316,7 +316,7 @@ const DataHeatmap = React.forwardRef<DataMapHandle, Props>(function DataHeatmap(
           >
             <div className="text-sm space-y-1">
               <div className="font-semibold">{selected.props.name}</div>
-              <div>Total Data (GB): {selected.props.weight}</div>
+              <div>Total Data (GB): {Math.ceil(selected.props.weight)}</div>
               {selected.props.siteclassification && (
                 <div>Class: {selected.props.siteclassification}</div>
               )}

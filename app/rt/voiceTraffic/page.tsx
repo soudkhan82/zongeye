@@ -230,7 +230,7 @@ export default function VoiceTrafficPage() {
                       heatmapRef.current?.flyTo(
                         site.longitude,
                         site.latitude,
-                        16
+                        12
                       );
                     }}
                   >

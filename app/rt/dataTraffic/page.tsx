@@ -189,11 +189,7 @@ function DataTrafficPage() {
                     className="cursor-pointer hover:bg-gray-200"
                     onClick={() => {
                       // zoom map to clicked row
-                      mapRef.current?.flyTo(
-                        site.longitude,
-                        site.latitude,
-                        15.5
-                      );
+                      mapRef.current?.flyTo(site.longitude, site.latitude, 12);
                     }}
                   >
                     <TableCell>{site.name}</TableCell>
