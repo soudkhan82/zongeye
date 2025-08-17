@@ -92,6 +92,11 @@ export default function VoiceTrafficPage() {
       cancelled = true;
     };
   }, [selectedSubRegion, selDistrict]);
+  function fmt(n: number | null | undefined, opts?: Intl.NumberFormatOptions) {
+    return n === null || typeof n === "undefined"
+      ? "—"
+      : n.toLocaleString(undefined, opts);
+  }
 
   // transform for map (same field names as VoiceHeatmap expects)
   const heatmapPoints = useMemo(
@@ -110,12 +115,6 @@ export default function VoiceTrafficPage() {
       })),
     [sites]
   );
-
-  function fmt(n: number | null | undefined, opts?: Intl.NumberFormatOptions) {
-    return n === null || typeof n === "undefined"
-      ? "—"
-      : n.toLocaleString(undefined, opts);
-  }
 
   return (
     <div className="w-full p-4 space-y-4">
@@ -236,9 +235,9 @@ export default function VoiceTrafficPage() {
                     }}
                   >
                     <TableCell>{site.name}</TableCell>
-                    <TableCell>{site.voice2gtraffic}</TableCell>
-                    <TableCell>{site.voice3gtraffic}</TableCell>
-                    <TableCell>{site.voltetraffic}</TableCell>
+                    <TableCell>{fmt(site.voice2gtraffic)}</TableCell>
+                    <TableCell>{fmt(site.voice3gtraffic)}</TableCell>
+                    <TableCell>{fmt(site.voltetraffic)}</TableCell>
                     <TableCell>{fmt(site.voicerevenue)}</TableCell>
                     <TableCell>{site.siteclassification}</TableCell>
                     <TableCell>{site.district}</TableCell>
