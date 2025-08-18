@@ -5,7 +5,10 @@ export function middleware(request: NextRequest) {
     const route = request.nextUrl.pathname;
     const token = request.cookies.get("token")?.value;
     const isPrivate =
-      route.startsWith("/corporate") || route.startsWith("/tasks");
+      route.startsWith("/corporate") ||
+      route.startsWith("/tasks") ||
+      route.startsWith("/home") ||
+      route.startsWith("/ssl");
 
     if (isPrivate && !token) {
       return NextResponse.redirect(new URL("/login", request.url));
@@ -23,5 +26,5 @@ export function middleware(request: NextRequest) {
   }
 }
 export const config = {
-  matcher: ["/about/:path*", "/corporate/:path*"],
+  matcher: ["/about/:path*", "/corporate/:path*", "/home", "/ssl", "/rt"],
 };
