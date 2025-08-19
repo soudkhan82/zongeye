@@ -23,9 +23,10 @@ export type MapPoint = {
   District: string | null;
   Grid: string | null;
   SiteClassification: string | null;
+  Address: string | null;
   Longitude: number | null;
   Latitude: number | null;
-
+  Month: string | null;
   MFULTotalRev: number | string | null;
   MFULDataRev: number | string | null;
   MFULVoiceRev: number | string | null;
@@ -34,8 +35,6 @@ export type MapPoint = {
   voice2GTrafficE: number | string | null;
   voice3GTrafficE: number | string | null;
   voLTEVoiceTrafficE: number | string | null;
-
-  Month: string | null;
 };
 
 type Props = {
@@ -132,6 +131,8 @@ export default function PointSizeMap({
               <div className="font-semibold">{hover.Name}</div>
               <div>SubRegion: {hover.SubRegion ?? "-"}</div>
               <div>District: {hover.District ?? "-"}</div>
+              <div>Grid: {hover.Grid ?? "-"}</div>
+              <div>Address: {hover.Address ?? "-"}</div>
               <div>
                 {kpiKey}: {hover[kpiKey] ?? "-"}
               </div>

@@ -26,19 +26,19 @@ type LatestKpiRow = {
   SubRegion: string | null;
   District: string | null;
   Grid: string | null;
+  Address: string | null;
   SiteClassification: string | null;
   Longitude: number | null;
   Latitude: number | null;
   Month: string | null;
-
+  MFULTotalRev: number | string | null;
+  MFULDataRev: number | string | null;
+  MFULVoiceRev: number | string | null;
+  data4GTrafficGB: number | string | null;
+  data3GTrafficGB: number | string | null;
   voice2GTrafficE: number | string | null;
   voice3GTrafficE: number | string | null;
   voLTEVoiceTrafficE: number | string | null;
-  data3GTrafficGB: number | string | null;
-  data4GTrafficGB: number | string | null;
-  MFULVoiceRev: number | string | null;
-  MFULDataRev: number | string | null;
-  MFULTotalRev: number | string | null;
 };
 
 const KPI_OPTIONS: { key: KpiKey; label: string }[] = [
@@ -53,7 +53,7 @@ const KPI_OPTIONS: { key: KpiKey; label: string }[] = [
 ];
 
 export default function VoiceTrafficPage() {
-  const [selectedSubRegion, setSelectedSubRegion] = useState<string>("");
+  const [selectedSubRegion, setSelectedSubRegion] = useState<string>("North-1");
   const [selDistrict, setSelDistrict] = useState<string>("");
 
   const [subregionOptions, setSubregionOptions] = useState<string[]>([]);
@@ -103,7 +103,7 @@ export default function VoiceTrafficPage() {
         SiteClassification: r.SiteClassification,
         Longitude: r.Longitude,
         Latitude: r.Latitude,
-
+        Address: r.Address,
         MFULTotalRev: r.MFULTotalRev,
         MFULDataRev: r.MFULDataRev,
         MFULVoiceRev: r.MFULVoiceRev,
