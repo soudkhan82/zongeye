@@ -22,6 +22,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+
 import {
   Table,
   TableBody,
@@ -33,6 +34,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
 export default function ActionsDashboard() {
   const [regionData, setRegionData] = useState<RegionCount[]>([]);
   const [typeData, setTypeData] = useState<ActionTypeCount[]>([]);
@@ -53,11 +56,19 @@ export default function ActionsDashboard() {
       if (typeResult) setTypeData(typeResult);
       if (statusResult) setStatusData(statusResult);
       if (allResult) setAllActions(allResult);
-      console.log(allResult);
     };
 
     fetchData();
   }, []);
+
+  // Count tasks by status
+  const totalCount = allActions.length;
+  const InProgressCount = allActions.filter(
+    (a) => a.status.toLowerCase() === "in-progress"
+  ).length;
+  const closedCount = allActions.filter(
+    (a) => a.status.toLowerCase() === "closed"
+  ).length;
 
   return (
     <div className="p-3">
@@ -66,13 +77,59 @@ export default function ActionsDashboard() {
           Actions Dashboard
         </h1>
 
-        <Button>
-          <Link href="./tasks/add">Add Ticket</Link>
-        </Button>
-        <Button>
-          <Link href="../tasks">Tasks Table</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button>
+            <Link href="./tasks/add">Add Ticket</Link>
+          </Button>
+          <Button>
+            <Link href="../tasks">Tasks Table</Link>
+          </Button>
+        </div>
       </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="bg-blue-100 shadow">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-blue-900 flex justify-center">
+              Total
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-center text-blue-700">
+              {totalCount}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-yellow-100 shadow">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-yellow-900 flex justify-center">
+              In Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-center text-yellow-700">
+              {InProgressCount}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-green-100 shadow">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-green-900 flex justify-center">
+              Closed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-center text-green-700">
+              {closedCount}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {/* Chart 1: By Region */}
         <div className="bg-white p-1 rounded shadow">
@@ -122,6 +179,8 @@ export default function ActionsDashboard() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Table */}
       <div className="mt-1">
         <h2 className="text-2xl font-semibold">All Actions</h2>
         <div className="bg-white p-6 rounded shadow h-[300px] overflow-y-auto">
@@ -154,7 +213,6 @@ export default function ActionsDashboard() {
                   <TableCell>{action.region}</TableCell>
                   <TableCell>{action.status}</TableCell>
                   <TableCell>{action.ActionType}</TableCell>
-
                   <TableCell>
                     {new Date(action.created_at).toLocaleDateString() ?? ""}
                   </TableCell>

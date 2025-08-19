@@ -9,7 +9,7 @@ import {
 } from "@/interfaces";
 import supabase from "../config/supabase-config";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 export const createNewActionItem = async (payload: NewActionItem) => {
   const { error } = await supabase.from("actions").insert(payload);
 
@@ -121,7 +121,7 @@ export async function getAllActions(): Promise<ActionItem[] | null> {
   const { data, error } = await supabase
     .from("actions")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("status", { ascending: false });
 
   if (error) {
     console.error("❌ Failed to fetch actions:", error);
