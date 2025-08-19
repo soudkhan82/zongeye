@@ -31,3 +31,15 @@ export const getAllpoints = async (
 
   return { data: data, total_records: count! };
 };
+
+//KPI fetching
+
+export async function getLatestPoints(subregion?: string, district?: string) {
+  const { data, error } = await supabase.rpc("fetch_latest_kpi_points", {
+    p_subregion: subregion || null,
+    p_district: district || null,
+  });
+
+  if (error) throw error;
+  return data ?? [];
+}
