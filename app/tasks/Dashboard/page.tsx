@@ -89,44 +89,48 @@ export default function ActionsDashboard() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-blue-100 shadow">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-blue-900 flex justify-center">
-              Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-center text-blue-700">
-              {totalCount}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-yellow-100 shadow">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-yellow-900 flex justify-center">
-              In Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-center text-yellow-700">
-              {InProgressCount}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-green-100 shadow">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-green-900 flex justify-center">
-              Closed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-center text-green-700">
-              {closedCount}
-            </p>
-          </CardContent>
-        </Card>
+        {totalCount > 0 && (
+          <Card className="bg-blue-100 shadow">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-blue-900 flex justify-center">
+                Total
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-center text-blue-700">
+                {totalCount}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        {InProgressCount > 0 && (
+          <Card className="bg-yellow-100 shadow">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-yellow-900 flex justify-center">
+                In Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-center text-yellow-700">
+                {InProgressCount}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        {closedCount > 0 && (
+          <Card className="bg-green-100 shadow">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-green-900 flex justify-center">
+                Closed
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-center text-green-700">
+                {closedCount}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Charts */}
