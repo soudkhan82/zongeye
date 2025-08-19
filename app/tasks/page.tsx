@@ -94,6 +94,9 @@ function SndList() {
             <Link href="./tasks/add">Add Ticket</Link>
           </Button>
           <Button>
+            <Link href="./tasks/list">Goto List</Link>
+          </Button>
+          <Button>
             <Link href="./tasks/Dashboard">Goto Dashboard</Link>
           </Button>
         </div>
