@@ -2,11 +2,13 @@
 
 import TrendsClient from "../../components/TrendClient";
 
-type PageParams = { id: string };
+interface Props {
+  params: Promise<{ id: string }>;
+}
 
 // ✅ params is a plain object, not a Promise
-export default async function Page({ params }: { params: PageParams }) {
-  const name = decodeURIComponent(params.id);
+export default async function Page({ params }: Props) {
+  const name = (await params).id;
 
   return (
     <div className="p-6">
