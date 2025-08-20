@@ -4,7 +4,6 @@ import { get_site_vitals_by_site } from "@/app/actions/ssl";
 
 type PageProps = {
   params: { id: string }; // dynamic segment value as string
-  searchParams?: Record<string, string | string[] | undefined>;
 };
 
 export default async function Page({ params }: PageProps) {
