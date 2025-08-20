@@ -32,6 +32,7 @@ import {
 
 import { getAvailabilityPoints } from "@/app/actions/avail";
 import { getSubregions } from "@/app/actions/filters";
+import Link from "next/link";
 
 // ---------------- Types ----------------
 
@@ -72,7 +73,7 @@ type FeatureProps = {
   subregion: string;
   grid: string;
   address: string;
-  color: string; // <-- fixed color per classification
+  color: string;
 };
 
 type HoverInfo = {
@@ -86,27 +87,32 @@ type FeatureCollectionPoint<P = FeatureProps> = GeoJSON.FeatureCollection<
   P
 >;
 
-// -------------- Helpers ----------------
-
 // -------------- Component --------------
 
 export default function AvailabilityPage() {
   const mapRef = useRef<MapRef | null>(null);
 
-  // filters
+  // options
   const [subregions, setSubregions] = useState<string[]>([]);
+
+  // 🔧 UI (pending) filters
+  const [pendingSubregion, setPendingSubregion] = useState<string | null>(null);
+  const [pendingClass, setPendingClass] = useState<SiteClass | null>(null);
+  const [pendingRange, setPendingRange] = useState<[number, number]>([0, 100]);
+
+  // ✅ Applied filters (used to fetch)
   const [selectedSubregion, setSelectedSubregion] = useState<string | null>(
     null
   );
   const [selectedClass, setSelectedClass] = useState<SiteClass | null>(null);
   const [availRange, setAvailRange] = useState<[number, number]>([0, 100]);
+
+  // local search (client-side only)
   const [search, setSearch] = useState<string>("");
 
-  // data
+  // data / states
   const [rows, setRows] = useState<AvailabilityRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-
-  // hover
   const [hoverInfo, setHoverInfo] = useState<HoverInfo>(null);
 
   // map initial view (Pakistan-ish)
@@ -117,7 +123,7 @@ export default function AvailabilityPage() {
     getSubregions().then((subs) => setSubregions(subs ?? []));
   }, []);
 
-  // fetch points when filters change
+  // fetch points WHEN APPLIED FILTERS CHANGE
   useEffect(() => {
     const run = async () => {
       setLoading(true);
@@ -147,6 +153,24 @@ export default function AvailabilityPage() {
     run();
   }, [selectedSubregion, selectedClass, availRange]);
 
+  // ▶️ Apply button handler
+  const applyFilters = () => {
+    setSelectedSubregion(pendingSubregion);
+    setSelectedClass(pendingClass);
+    setAvailRange(pendingRange);
+  };
+
+  // 🔄 Clear filters (resets both UI + applied, triggers fetch via effect)
+  const clearFilters = () => {
+    setPendingSubregion(null);
+    setPendingClass(null);
+    setPendingRange([0, 100]);
+    setSearch("");
+    setSelectedSubregion(null);
+    setSelectedClass(null);
+    setAvailRange([0, 100]);
+  };
+
   // local search
   const filtered = useMemo(() => {
     if (!search.trim()) return rows;
@@ -159,7 +183,7 @@ export default function AvailabilityPage() {
     );
   }, [rows, search]);
 
-  // GeoJSON with fixed color per classification
+  // GeoJSON
   const geojson: FeatureCollectionPoint = useMemo(
     () => ({
       type: "FeatureCollection",
@@ -169,10 +193,7 @@ export default function AvailabilityPage() {
         )
         .map<GeoJSON.Feature<GeoJSON.Point, FeatureProps>>((r) => ({
           type: "Feature",
-          geometry: {
-            type: "Point",
-            coordinates: [r.longitude, r.latitude],
-          },
+          geometry: { type: "Point", coordinates: [r.longitude, r.latitude] },
           properties: {
             name: r.name,
             availability: r.avg_availability,
@@ -187,8 +208,6 @@ export default function AvailabilityPage() {
     [filtered]
   );
 
-  // Simple, typed circle paint: fixed size + color from feature props
-
   // hover handlers (typed)
   const onMouseMove = (e: MapLayerMouseEvent) => {
     const feature: MapGeoJSONFeature | undefined = e.features?.[0];
@@ -196,7 +215,6 @@ export default function AvailabilityPage() {
       setHoverInfo(null);
       return;
     }
-
     const coords = (feature.geometry as GeoJSON.Point).coordinates;
     const props = feature.properties as unknown as FeatureProps | undefined;
 
@@ -204,9 +222,7 @@ export default function AvailabilityPage() {
       setHoverInfo(null);
       return;
     }
-
     const [lng, lat] = coords as [number, number];
-
     setHoverInfo({
       longitude: lng,
       latitude: lat,
@@ -221,7 +237,6 @@ export default function AvailabilityPage() {
       },
     });
   };
-
   const onLeave = () => setHoverInfo(null);
 
   // row click → fly to
@@ -247,12 +262,12 @@ export default function AvailabilityPage() {
       <h1 className="text-2xl font-semibold">Availability Geo View</h1>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-        <div>
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+        <div className="md:col-span-1">
           <Label className="mb-1 block">SubRegion</Label>
           <Select
-            onValueChange={(v) => setSelectedSubregion(v)}
-            value={selectedSubregion ?? ""}
+            onValueChange={(v) => setPendingSubregion(v)}
+            value={pendingSubregion ?? ""}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a subregion" />
@@ -267,11 +282,11 @@ export default function AvailabilityPage() {
           </Select>
         </div>
 
-        <div>
+        <div className="md:col-span-1">
           <Label className="mb-1 block">Site Classification</Label>
           <Select
-            onValueChange={(v) => setSelectedClass(v as SiteClass)}
-            value={selectedClass ?? ""}
+            onValueChange={(v) => setPendingClass(v as SiteClass)}
+            value={pendingClass ?? ""}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All classes" />
@@ -288,20 +303,20 @@ export default function AvailabilityPage() {
 
         <div className="md:col-span-2">
           <Label className="mb-1 block">
-            Availability Range: {availRange[0]}% – {availRange[1]}%
+            Availability Range: {pendingRange[0]}% – {pendingRange[1]}%
           </Label>
           <Slider
             min={0}
             max={100}
             step={1}
-            value={availRange}
+            value={pendingRange}
             onValueChange={(v) =>
-              setAvailRange([v[0] ?? 0, v[1] ?? 100] as [number, number])
+              setPendingRange([v[0] ?? 0, v[1] ?? 100] as [number, number])
             }
           />
         </div>
 
-        <div>
+        <div className="md:col-span-1">
           <Label className="mb-1 block">Search (Name/Grid/Address)</Label>
           <Input
             placeholder="e.g., Lahore, SGRID-12, Site-001"
@@ -310,17 +325,18 @@ export default function AvailabilityPage() {
           />
         </div>
 
-        <div className="md:col-span-5">
+        {/* ➕ Apply / Clear */}
+        <div className="flex gap-2 md:col-span-1">
+          <Button onClick={applyFilters} disabled={loading} className="w-full">
+            {loading ? "Applying…" : "Apply Filters"}
+          </Button>
           <Button
             variant="secondary"
-            onClick={() => {
-              setSelectedSubregion(null);
-              setSelectedClass(null);
-              setAvailRange([0, 100]);
-              setSearch("");
-            }}
+            onClick={clearFilters}
+            disabled={loading}
+            className="w-full"
           >
-            Clear Filters
+            Clear
           </Button>
         </div>
       </div>
@@ -399,7 +415,7 @@ export default function AvailabilityPage() {
                     onClick={() => flyTo(r)}
                   >
                     <TableCell className="whitespace-nowrap">
-                      {r.name}
+                      <Link href={`/ssl/vitals/${r.name}`}>{r.name}</Link>
                     </TableCell>
                     <TableCell>{r.avg_availability.toFixed(2)}</TableCell>
                     <TableCell>{r.siteclassification}</TableCell>
@@ -421,7 +437,7 @@ export default function AvailabilityPage() {
         </Card>
       </div>
 
-      {/* Legend (per-class fixed colors) */}
+      {/* Legend */}
       <div className="flex items-center gap-4 pt-2 flex-wrap">
         <div className="text-sm font-medium">Legend:</div>
         {classes.map((c) => (

@@ -106,7 +106,6 @@ export default function TrendsClient({ name }: Props) {
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-bold">Trends — {name}</h1>
         <Button onClick={load} disabled={loading}>
           {loading ? "Loading..." : "Refresh"}
         </Button>
