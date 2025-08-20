@@ -1,5 +1,5 @@
 // app/lib/mapColors.ts
-
+import type { ExpressionSpecification } from "maplibre-gl";
 // Hex colors per SiteClassification
 export const CLASS_COLORS: Record<string, string> = {
   platinum: "#15803d", // green-700
@@ -16,7 +16,7 @@ export const CLASS_COLORS: Record<string, string> = {
  *
  * Usage: <Layer paint={{ "circle-color": circleColorBySiteClass(), ... }} />
  */
-export function circleColorBySiteClass(): any {
+export function circleColorBySiteClass(): ExpressionSpecification {
   return [
     "match",
     ["downcase", ["coalesce", ["get", "siteclassification"], ""]],
