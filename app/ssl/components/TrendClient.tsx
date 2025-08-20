@@ -28,8 +28,8 @@ export default function TrendsClient({ name }: Props) {
     try {
       const bundle = await getAllTrends(name);
       setData(bundle);
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to load trends");
+    } catch (e) {
+      setErr("Failed to load trends");
     } finally {
       setLoading(false);
     }
