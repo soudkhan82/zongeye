@@ -141,6 +141,18 @@ export interface SiteAccessRequest {
   Approver_comments: string;
 }
 
+export interface FetchAvailabilityPointsRow {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  siteClassification: string; // cast to SiteClass below
+  district: string | null;
+  grid: string | null;
+  subregion: string | null;
+  avg_availability: number | null;
+}
+
 export interface GeoPoint {
   id: number;
   Name: string;
@@ -150,20 +162,6 @@ export interface GeoPoint {
   SiteClassification: string;
   District: string;
   Address: string;
-}
-
-export interface Availability {
-  id: number;
-  month: string;
-  SITE_ID: string;
-  SubRegion: string;
-  Region: string;
-  CAT: string;
-  Availability: number;
-}
-export interface AvailabilityPoint {
-  month: string;
-  availability: number;
 }
 
 export interface VoiceTraffic {
@@ -234,4 +232,3 @@ export interface siteVitals {
 }
 
 //final and clean version for traffic
-

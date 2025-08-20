@@ -24,9 +24,10 @@ import { sslSite } from "@/interfaces";
 
 import { fetchSslSites, getGrids, getDistricts } from "@/app/actions/ssl";
 import SSlMap, { MapHandle } from "../gis/components/sslMap";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { getSubregions } from "../actions/filters";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 export default function SslPage() {
   const [subregion, setSubregion] = useState<string>("North-1");
   const [grid, setGrid] = useState<string | null>(null);
@@ -36,15 +37,15 @@ export default function SslPage() {
   const [grids, setGrids] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
   const [selected, setSelected] = useState<sslSite | null>(null);
-  const [selectedName, setSelectedName] = useState<string>("");
+
   const [rows, setRows] = useState<sslSite[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const onRowClick = (p: sslSite) => {
-    setSelectedName(p.name);
     setSelected(p);
     mapRef.current?.flyTo(p.longitude, p.latitude, 14);
   };
+
   function clearFilters() {
     setSubregion("");
     setGrid(null);
@@ -52,15 +53,16 @@ export default function SslPage() {
     setGrids([]);
     setDistricts([]);
     setRows([]); // clear results & markers
+    setSelected(null);
   }
 
   // load subregions once
   useEffect(() => {
     (async () => {
       const list = await getSubregions(); // string[]
-      setSubregions(list); // ✅ array -> array state
+      setSubregions(list);
       if (!list.includes("North-1") && list.length > 0) {
-        setSubregion(list[0]); // ✅ single -> string state
+        setSubregion(list[0]);
       }
     })();
   }, []);
@@ -69,6 +71,7 @@ export default function SslPage() {
   useEffect(() => {
     setGrid(null);
     setDistrict(null);
+    setSelected(null);
     if (!subregion) {
       setGrids([]);
       setDistricts([]);
@@ -114,10 +117,14 @@ export default function SslPage() {
         Geo-Analytics: SSL Sites
       </h1>
 
-      {selectedName && (
-        <div className="hover:bg-accent/50 transition-colors w-[250px] flex flex-row  ">
-          <Link href={`/ssl/vitals/${selectedName}`} target="_blank">
-            <Button>Goto SiteVitals</Button>
+      {/* Link to Trends (only when a row is selected) */}
+      {selected && (
+        <div className="text-center">
+          <Link
+            href={`/ssl/vitals/${encodeURIComponent(selected.name)}`}
+            className="inline-block px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            View Trends for {selected.name}
           </Link>
         </div>
       )}
@@ -177,6 +184,7 @@ export default function SslPage() {
             ))}
           </SelectContent>
         </Select>
+
         <Button variant="outline" onClick={clearFilters}>
           Clear filters
         </Button>
@@ -201,29 +209,45 @@ export default function SslPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r) => (
-                  <TableRow
-                    key={r.name}
-                    className="cursor-pointer hover:bg-accent/50 transition-colors"
-                    onDoubleClick={() => router.push(`/ssl/vitals/${r.name}`)}
-                    onClick={() => onRowClick(r)}
-                  >
-                    <TableCell>{r.name}</TableCell>
-                    <TableCell>{r.district ?? "—"}</TableCell>
-                    <TableCell>{r.grid ?? "—"}</TableCell>
-                    <TableCell>{r.Siteclassification ?? "—"}</TableCell>
-                    <TableCell>{r.subregion ?? "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {r.address ?? "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {rows.map((r) => {
+                  const isSelected = selected?.name === r.name;
+                  return (
+                    <TableRow
+                      key={r.name}
+                      className={`cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-indigo-50 hover:bg-indigo-100"
+                          : "hover:bg-accent/50"
+                      }`}
+                      onClick={() => onRowClick(r)}
+                      // single-click selects & shows link
+                    >
+                      <TableCell className="font-medium">
+                        <Link
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          href={`/ssl/vitals/${encodeURIComponent(r.name)}`}
+                        >
+                          {" "}
+                          {r.name}{" "}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{r.district ?? "—"}</TableCell>
+                      <TableCell>{r.grid ?? "—"}</TableCell>
+                      <TableCell>{r.Siteclassification ?? "—"}</TableCell>
+                      <TableCell>{r.subregion ?? "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {r.address ?? "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {/* Map without GeoJSON */}
+        {/* Map */}
         <Card className="w-full h-[400px]">
           <SSlMap
             ref={mapRef}

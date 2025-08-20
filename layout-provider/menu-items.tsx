@@ -69,7 +69,6 @@ function MenuItems({
     { title: "Live Network Dashboard", route: "/ssl/Dashboard", icon: MapIcon },
     { title: "Network Availability", route: "/avail", icon: Newspaper },
     { title: "Corporate", route: "/corporate/dashboard", icon: Newspaper },
-    { title: "Voice & Data Heatmaps", route: "/rt", icon: Newspaper },
     { title: "Action Items", route: "/tasks", icon: SquareCheckBig },
     { title: "Network Achievements", route: "/blog", icon: Newspaper },
     { title: "Site Access Requests", route: "/vendor/SAR", icon: FileDown },

@@ -1,19 +1,6 @@
-// app/ss/vitals/[id]/page.tsx
+import TrendsClient from "@/app/ssl/components/TrendClient";
 
-import { getAvailabilityBySite } from "@/app/actions/avail";
-import { AvailabilityPoint, siteVitals } from "@/interfaces";
-import { get_site_vitals_by_site } from "@/app/actions/ssl";
-import SiteStatsView from "../../components/SiteStatsView";
-
-export default async function VitalsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const resolvedParams = await params;
-  const siteName = decodeURIComponent(resolvedParams.id); // "Name" passed in URL
-  const avail: AvailabilityPoint[] = await getAvailabilityBySite(siteName);
-  const vitals: siteVitals[] = await get_site_vitals_by_site(siteName);
-
-  return <SiteStatsView avail={avail} vitals={vitals} title={siteName} />;
+export default function Page({ params }: { params: { id: string } }) {
+  const name = decodeURIComponent(params.id ?? "");
+  return <TrendsClient name={name} />;
 }
