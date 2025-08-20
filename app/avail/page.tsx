@@ -2,7 +2,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import maplibregl, { type MapLayerMouseEvent } from "maplibre-gl";
+import maplibregl, {
+  type MapLayerMouseEvent,
+  type MapGeoJSONFeature,
+} from "maplibre-gl";
 import Map, { MapRef, Source, Layer, Popup } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -30,6 +33,8 @@ import {
 import { getAvailabilityPoints } from "@/app/actions/avail";
 import { getSubregions } from "@/app/actions/filters";
 
+// ---------------- Types ----------------
+
 type SiteClass = "Platinum" | "Gold" | "Strategic" | "Silver" | "Bronze";
 
 type AvailabilityRow = {
@@ -42,6 +47,48 @@ type AvailabilityRow = {
   longitude: number;
   avg_availability: number; // 0..100
 };
+
+type FeatureProps = {
+  name: string;
+  availability: number;
+  siteclassification: string;
+  subregion: string;
+  grid: string;
+  address: string;
+  color: string; // <-- fixed color per classification
+};
+
+type HoverInfo = {
+  longitude: number;
+  latitude: number;
+  props: FeatureProps;
+} | null;
+
+type FeatureCollectionPoint<P = FeatureProps> = GeoJSON.FeatureCollection<
+  GeoJSON.Point,
+  P
+>;
+
+// -------------- Helpers ----------------
+
+function getClassColor(cls: string): string {
+  switch (cls.toLowerCase()) {
+    case "platinum":
+      return "#1978c8"; // blue
+    case "gold":
+      return "#d4af37"; // gold
+    case "strategic":
+      return "#ff7f0e"; // orange
+    case "silver":
+      return "#a9a9a9"; // gray
+    case "bronze":
+      return "#cd7f32"; // bronze
+    default:
+      return "#888888"; // fallback gray
+  }
+}
+
+// -------------- Component --------------
 
 export default function AvailabilityPage() {
   const mapRef = useRef<MapRef | null>(null);
@@ -59,19 +106,8 @@ export default function AvailabilityPage() {
   const [rows, setRows] = useState<AvailabilityRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // hover popup
-  const [hoverInfo, setHoverInfo] = useState<{
-    longitude: number;
-    latitude: number;
-    props: {
-      name: string;
-      availability: number;
-      siteclassification: string;
-      subregion: string;
-      grid: string;
-      address: string;
-    };
-  } | null>(null);
+  // hover
+  const [hoverInfo, setHoverInfo] = useState<HoverInfo>(null);
 
   // map initial view (Pakistan-ish)
   const initialViewState = { longitude: 69.3451, latitude: 30.3753, zoom: 4.5 };
@@ -93,7 +129,7 @@ export default function AvailabilityPage() {
           availRange[1]
         );
         setRows(
-          (data ?? []).map((r: any) => ({
+          (data ?? []).map((r: AvailabilityRow) => ({
             name: r.name,
             subregion: r.subregion ?? null,
             siteclassification: r.siteclassification,
@@ -111,7 +147,7 @@ export default function AvailabilityPage() {
     run();
   }, [selectedSubregion, selectedClass, availRange]);
 
-  // optional local search (Name/Grid/Address)
+  // local search
   const filtered = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
@@ -123,92 +159,76 @@ export default function AvailabilityPage() {
     );
   }, [rows, search]);
 
-  // to GeoJSON
-  const geojson = useMemo(
+  // GeoJSON with fixed color per classification
+  const geojson: FeatureCollectionPoint = useMemo(
     () => ({
-      type: "FeatureCollection" as const,
+      type: "FeatureCollection",
       features: filtered
         .filter(
           (r) => Number.isFinite(r.latitude) && Number.isFinite(r.longitude)
         )
-        .map((r) => ({
-          type: "Feature" as const,
+        .map<GeoJSON.Feature<GeoJSON.Point, FeatureProps>>((r) => ({
+          type: "Feature",
           geometry: {
-            type: "Point" as const,
+            type: "Point",
             coordinates: [r.longitude, r.latitude],
           },
           properties: {
             name: r.name,
             availability: r.avg_availability,
-            siteclassification: r.siteclassification,
+            siteclassification: String(r.siteclassification),
             subregion: r.subregion ?? "-",
             grid: r.grid ?? "-",
             address: r.address ?? "-",
+            color: getClassColor(String(r.siteclassification)),
           },
         })),
     }),
     [filtered]
   );
 
-  // circle layer: 0 red → 100 blue
-  const circleLayer: any = {
-    id: "availability-circles",
-    type: "circle",
-    source: "availability",
-    paint: {
-      "circle-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "availability"],
-        0,
-        "#ff0000",
-        100,
-        "#0000ff",
-      ],
-      "circle-radius": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        4,
-        3,
-        6,
-        5,
-        8,
-        7,
-        10,
-        9,
-        12,
-        11,
-        14,
-        13,
-      ],
-      "circle-stroke-color": "#ffffff",
-      "circle-stroke-width": 1,
-      "circle-opacity": 0.9,
-    },
+  // Simple, typed circle paint: fixed size + color from feature props
+  const circlePaint: maplibregl.CirclePaint = {
+    "circle-radius": 6,
+    "circle-color": ["get", "color"],
+    "circle-stroke-color": "#ffffff",
+    "circle-stroke-width": 1,
+    "circle-opacity": 0.9,
   };
 
   // hover handlers (typed)
   const onMouseMove = (e: MapLayerMouseEvent) => {
-    const f = (e.features && e.features[0]) as any;
-    if (!f || !f.geometry || !f.properties) {
+    const feature: MapGeoJSONFeature | undefined = e.features?.[0];
+    if (!feature || feature.geometry.type !== "Point") {
       setHoverInfo(null);
       return;
     }
-    const [lng, lat] = f.geometry.coordinates as [number, number];
+
+    const coords = (feature.geometry as GeoJSON.Point).coordinates;
+    const props = feature.properties as unknown as FeatureProps | undefined;
+
+    if (!props || !Array.isArray(coords) || coords.length < 2) {
+      setHoverInfo(null);
+      return;
+    }
+
+    const [lng, lat] = coords as [number, number];
+
     setHoverInfo({
       longitude: lng,
       latitude: lat,
       props: {
-        name: String(f.properties.name),
-        availability: Number(f.properties.availability),
-        siteclassification: String(f.properties.siteclassification),
-        subregion: String(f.properties.subregion),
-        grid: String(f.properties.grid),
-        address: String(f.properties.address),
+        name: String(props.name),
+        availability: Number(props.availability),
+        siteclassification: String(props.siteclassification),
+        subregion: String(props.subregion),
+        grid: String(props.grid),
+        address: String(props.address),
+        color: String(props.color),
       },
     });
   };
+
   const onLeave = () => setHoverInfo(null);
 
   // row click → fly to
@@ -327,7 +347,11 @@ export default function AvailabilityPage() {
               onMouseLeave={onLeave}
             >
               <Source id="availability" type="geojson" data={geojson}>
-                <Layer {...circleLayer} />
+                <Layer
+                  id="availability-circles"
+                  type="circle"
+                  paint={circlePaint}
+                />
               </Source>
 
               {hoverInfo && (
@@ -408,25 +432,18 @@ export default function AvailabilityPage() {
         </Card>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-3 pt-2">
+      {/* Legend (per-class fixed colors) */}
+      <div className="flex items-center gap-4 pt-2 flex-wrap">
         <div className="text-sm font-medium">Legend:</div>
-        <div className="flex items-center gap-2">
-          <span
-            className="w-3 h-3 rounded-full"
-            style={{ background: "#ff0000" }}
-          />
-          <span className="text-sm">0%</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span
-            className="w-16 h-3 rounded"
-            style={{
-              background: "linear-gradient(90deg, #ff0000 0%, #0000ff 100%)",
-            }}
-          />
-          <span className="text-sm">→ 100%</span>
-        </div>
+        {classes.map((c) => (
+          <div className="flex items-center gap-2" key={c}>
+            <span
+              className="w-3 h-3 rounded-full"
+              style={{ background: getClassColor(c) }}
+            />
+            <span className="text-sm">{c}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
