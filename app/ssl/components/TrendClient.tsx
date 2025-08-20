@@ -14,7 +14,6 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { error } from "console";
 
 type Props = { name: string };
 
@@ -30,7 +29,7 @@ export default function TrendsClient({ name }: Props) {
       const bundle = await getAllTrends(name);
       setData(bundle);
     } catch (e) {
-      throw error;
+      return;
     } finally {
       setLoading(false);
     }
