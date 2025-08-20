@@ -40,7 +40,6 @@ export default function SslPage() {
 
   const [rows, setRows] = useState<sslSite[]>([]);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const onRowClick = (p: sslSite) => {
     setSelected(p);
     mapRef.current?.flyTo(p.longitude, p.latitude, 14);
