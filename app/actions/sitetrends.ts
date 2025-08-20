@@ -51,7 +51,7 @@ export async function getTrafficTrend(name: string): Promise<TrafficPoint[]> {
   });
   if (error) throw error;
 
-  return (data ?? []).map((d: any) => ({
+  return (data ?? []).map((d: TrafficPoint) => ({
     month: normalizeMonth(d.month),
     voice2g_traffic: d.voice2g_traffic ?? null,
     voice3g_traffic: d.voice3g_traffic ?? null,
@@ -70,7 +70,7 @@ export async function getAvailabilityTrend(
   });
   if (error) throw error;
 
-  return (data ?? []).map((d: any) => ({
+  return (data ?? []).map((d: AvailabilityPoint) => ({
     month: normalizeMonth(d.month),
     availability: d.availability ?? null,
   })) as AvailabilityPoint[];
@@ -85,7 +85,7 @@ export async function getComplaintsTrend(
   });
   if (error) throw error;
 
-  return (data ?? []).map((d: any) => ({
+  return (data ?? []).map((d: ComplaintsPoint) => ({
     month: normalizeMonth(d.month),
     complaints_count: Number(d.complaints_count ?? 0),
   })) as ComplaintsPoint[];
