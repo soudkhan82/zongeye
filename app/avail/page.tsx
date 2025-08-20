@@ -56,7 +56,6 @@ type FeatureProps = {
   subregion: string;
   grid: string;
   address: string;
-  
 };
 
 type HoverInfo = {
@@ -184,7 +183,6 @@ export default function AvailabilityPage() {
             subregion: r.subregion ?? "-",
             grid: r.grid ?? "-",
             address: r.address ?? "-",
-            
           },
         })),
     }),
@@ -216,7 +214,6 @@ export default function AvailabilityPage() {
         subregion: String(props.subregion),
         grid: String(props.grid),
         address: String(props.address),
-        
       },
     });
   };
@@ -404,6 +401,7 @@ export default function AvailabilityPage() {
             )}
           </div>
           <div className="border rounded-xl bg-white shadow overflow-auto max-h-[560px]">
+            
             <Table>
               <TableHeader className="bg-blue-100 text-blue-900 sticky top-0 z-10">
                 <TableRow>
@@ -423,7 +421,7 @@ export default function AvailabilityPage() {
                     onClick={() => flyTo(r)}
                   >
                     <TableCell className="whitespace-nowrap">
-                      <Link href={`/ssl/vitals/${r.name}`}>{r.name}</Link>
+                      {r.name}
                     </TableCell>
                     <TableCell>{r.avg_availability.toFixed(2)}</TableCell>
                     <TableCell>{r.siteclassification}</TableCell>
