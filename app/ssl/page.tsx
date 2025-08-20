@@ -26,7 +26,6 @@ import { fetchSslSites, getGrids, getDistricts } from "@/app/actions/ssl";
 import SSlMap, { MapHandle } from "../gis/components/sslMap";
 import { getSubregions } from "../actions/filters";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function SslPage() {
   const [subregion, setSubregion] = useState<string>("North-1");

@@ -37,6 +37,23 @@ import { getSubregions } from "@/app/actions/filters";
 
 type SiteClass = "Platinum" | "Gold" | "Strategic" | "Silver" | "Bronze";
 
+function getMarkerColor(cls?: string | null) {
+  switch ((cls ?? "").toLowerCase()) {
+    case "platinum":
+      return "bg-green-700";
+    case "gold":
+      return "bg-yellow-500";
+    case "strategic":
+      return "bg-blue-600";
+    case "silver":
+      return "bg-gray-400";
+    case "bronze":
+      return "bg-orange-600";
+    default:
+      return "bg-red-600";
+  }
+}
+
 type AvailabilityRow = {
   name: string;
   subregion: string | null;
@@ -70,23 +87,6 @@ type FeatureCollectionPoint<P = FeatureProps> = GeoJSON.FeatureCollection<
 >;
 
 // -------------- Helpers ----------------
-
-function getClassColor(cls: string): string {
-  switch (cls.toLowerCase()) {
-    case "platinum":
-      return "#1978c8"; // blue
-    case "gold":
-      return "#d4af37"; // gold
-    case "strategic":
-      return "#ff7f0e"; // orange
-    case "silver":
-      return "#a9a9a9"; // gray
-    case "bronze":
-      return "#cd7f32"; // bronze
-    default:
-      return "#888888"; // fallback gray
-  }
-}
 
 // -------------- Component --------------
 
@@ -180,7 +180,7 @@ export default function AvailabilityPage() {
             subregion: r.subregion ?? "-",
             grid: r.grid ?? "-",
             address: r.address ?? "-",
-            color: getClassColor(String(r.siteclassification)),
+            color: getMarkerColor(r.siteclassification),
           },
         })),
     }),
@@ -188,13 +188,6 @@ export default function AvailabilityPage() {
   );
 
   // Simple, typed circle paint: fixed size + color from feature props
-  const circlePaint: maplibregl.CirclePaint = {
-    "circle-radius": 6,
-    "circle-color": ["get", "color"],
-    "circle-stroke-color": "#ffffff",
-    "circle-stroke-width": 1,
-    "circle-opacity": 0.9,
-  };
 
   // hover handlers (typed)
   const onMouseMove = (e: MapLayerMouseEvent) => {
@@ -347,11 +340,7 @@ export default function AvailabilityPage() {
               onMouseLeave={onLeave}
             >
               <Source id="availability" type="geojson" data={geojson}>
-                <Layer
-                  id="availability-circles"
-                  type="circle"
-                  paint={circlePaint}
-                />
+                <Layer id="availability-circles" type="circle" />
               </Source>
 
               {hoverInfo && (
@@ -437,10 +426,7 @@ export default function AvailabilityPage() {
         <div className="text-sm font-medium">Legend:</div>
         {classes.map((c) => (
           <div className="flex items-center gap-2" key={c}>
-            <span
-              className="w-3 h-3 rounded-full"
-              style={{ background: getClassColor(c) }}
-            />
+            <span className="w-3 h-3 rounded-full" />
             <span className="text-sm">{c}</span>
           </div>
         ))}
