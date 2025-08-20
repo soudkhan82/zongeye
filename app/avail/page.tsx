@@ -1,6 +1,6 @@
 // app/availability/page.tsx
 "use client";
-
+import { circleColorBySiteClass, colorForSiteClass } from "@/lib/mapColors";
 import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, {
   type MapLayerMouseEvent,
@@ -38,23 +38,6 @@ import Link from "next/link";
 
 type SiteClass = "Platinum" | "Gold" | "Strategic" | "Silver" | "Bronze";
 
-function getMarkerColor(cls?: string | null) {
-  switch ((cls ?? "").toLowerCase()) {
-    case "platinum":
-      return "bg-green-700";
-    case "gold":
-      return "bg-yellow-500";
-    case "strategic":
-      return "bg-blue-600";
-    case "silver":
-      return "bg-gray-400";
-    case "bronze":
-      return "bg-orange-600";
-    default:
-      return "bg-red-600";
-  }
-}
-
 type AvailabilityRow = {
   name: string;
   subregion: string | null;
@@ -73,7 +56,7 @@ type FeatureProps = {
   subregion: string;
   grid: string;
   address: string;
-  color: string;
+  
 };
 
 type HoverInfo = {
@@ -201,7 +184,7 @@ export default function AvailabilityPage() {
             subregion: r.subregion ?? "-",
             grid: r.grid ?? "-",
             address: r.address ?? "-",
-            color: getMarkerColor(r.siteclassification),
+            
           },
         })),
     }),
@@ -233,7 +216,7 @@ export default function AvailabilityPage() {
         subregion: String(props.subregion),
         grid: String(props.grid),
         address: String(props.address),
-        color: String(props.color),
+        
       },
     });
   };
@@ -356,7 +339,32 @@ export default function AvailabilityPage() {
               onMouseLeave={onLeave}
             >
               <Source id="availability" type="geojson" data={geojson}>
-                <Layer id="availability-circles" type="circle" />
+                <Layer
+                  id="availability-circles"
+                  type="circle"
+                  paint={{
+                    // size + stroke
+                    "circle-radius": [
+                      "interpolate",
+                      ["linear"],
+                      ["zoom"],
+                      4,
+                      3,
+                      8,
+                      6,
+                      12,
+                      9,
+                      14,
+                      12,
+                    ],
+                    "circle-stroke-color": "#ffffff",
+                    "circle-stroke-width": 1,
+                    "circle-opacity": 0.9,
+
+                    // 🔴 color by SiteClassification via helper
+                    "circle-color": circleColorBySiteClass(),
+                  }}
+                />
               </Source>
 
               {hoverInfo && (
@@ -442,7 +450,10 @@ export default function AvailabilityPage() {
         <div className="text-sm font-medium">Legend:</div>
         {classes.map((c) => (
           <div className="flex items-center gap-2" key={c}>
-            <span className="w-3 h-3 rounded-full" />
+            <span
+              className="w-3 h-3 rounded-full border"
+              style={{ backgroundColor: colorForSiteClass(c) }}
+            />
             <span className="text-sm">{c}</span>
           </div>
         ))}
