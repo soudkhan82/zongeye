@@ -32,7 +32,6 @@ import {
 
 import { getAvailabilityPoints } from "@/app/actions/avail";
 import { getSubregions } from "@/app/actions/filters";
-import Link from "next/link";
 
 // ---------------- Types ----------------
 
@@ -401,7 +400,6 @@ export default function AvailabilityPage() {
             )}
           </div>
           <div className="border rounded-xl bg-white shadow overflow-auto max-h-[560px]">
-            
             <Table>
               <TableHeader className="bg-blue-100 text-blue-900 sticky top-0 z-10">
                 <TableRow>
