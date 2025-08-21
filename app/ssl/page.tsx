@@ -220,14 +220,14 @@ export default function SslPage() {
                       onClick={() => onRowClick(r)}
                       // single-click selects & shows link
                     >
-                      <TableCell className="font-medium">
-                        <Link
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          href={`/ssl/vitals/${encodeURIComponent(r.name)}`}
-                        ></Link>
-                        {r.name}
-                      </TableCell>
+                      <Link
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`/ssl/vitals/${r.name}}`}
+                      >
+                        <TableCell className="font-medium">{r.name}</TableCell>
+                      </Link>
+
                       <TableCell>{r.district ?? "—"}</TableCell>
                       <TableCell>{r.grid ?? "—"}</TableCell>
                       <TableCell>{r.Siteclassification ?? "—"}</TableCell>

@@ -423,10 +423,12 @@ export default function AvailabilityPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       href={`/ssl/vitals/${encodeURIComponent(r.name)}`}
-                    ></Link>
-                    <TableCell className="whitespace-nowrap">
-                      {r.name}
-                    </TableCell>
+                    >
+                      <TableCell className="whitespace-nowrap">
+                        {r.name}
+                      </TableCell>
+                    </Link>
+
                     <TableCell>{r.avg_availability.toFixed(2)}</TableCell>
                     <TableCell>{r.siteclassification}</TableCell>
                     <TableCell>{r.subregion ?? "-"}</TableCell>
