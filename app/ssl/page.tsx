@@ -225,10 +225,8 @@ export default function SslPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           href={`/ssl/vitals/${encodeURIComponent(r.name)}`}
-                        >
-                          {" "}
-                          {r.name}{" "}
-                        </Link>
+                        ></Link>
+                        {r.name}
                       </TableCell>
                       <TableCell>{r.district ?? "—"}</TableCell>
                       <TableCell>{r.grid ?? "—"}</TableCell>

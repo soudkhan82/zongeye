@@ -32,6 +32,7 @@ import {
 
 import { getAvailabilityPoints } from "@/app/actions/avail";
 import { getSubregions } from "@/app/actions/filters";
+import Link from "next/link";
 
 // ---------------- Types ----------------
 
@@ -418,6 +419,11 @@ export default function AvailabilityPage() {
                     className="cursor-pointer hover:bg-blue-50"
                     onClick={() => flyTo(r)}
                   >
+                    <Link
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`/ssl/vitals/${encodeURIComponent(r.name)}`}
+                    ></Link>
                     <TableCell className="whitespace-nowrap">
                       {r.name}
                     </TableCell>
