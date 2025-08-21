@@ -422,7 +422,7 @@ export default function AvailabilityPage() {
                     <Link
                       target="_blank"
                       rel="noopener noreferrer"
-                      href={`/ssl/vitals/${encodeURIComponent(r.name)}`}
+                      href={`/ssl/vitals/${r.name}`}
                     >
                       <TableCell className="whitespace-nowrap">
                         {r.name}
