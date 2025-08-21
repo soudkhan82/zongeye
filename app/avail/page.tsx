@@ -68,6 +68,66 @@ type FeatureCollectionPoint<P = FeatureProps> = GeoJSON.FeatureCollection<
   GeoJSON.Point,
   P
 >;
+// CSV utils
+function csvEscape(v: unknown): string {
+  const s = v == null ? "" : String(v);
+  // wrap in quotes if it contains comma, quote, or newline; escape quotes
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function toCsv(rows: AvailabilityRow[]): string {
+  const headers = [
+    "Name",
+    "Availability %",
+    "Class",
+    "SubRegion",
+    "Grid",
+    "Address",
+    "Latitude",
+    "Longitude",
+  ];
+  const headerLine = headers.map(csvEscape).join(",");
+
+  const lines = rows.map((r) =>
+    [
+      r.name,
+      typeof r.avg_availability === "number"
+        ? r.avg_availability.toFixed(2)
+        : "",
+      r.siteclassification ?? "",
+      r.subregion ?? "",
+      r.grid ?? "",
+      r.address ?? "",
+      r.latitude,
+      r.longitude,
+    ]
+      .map(csvEscape)
+      .join(",")
+  );
+
+  return [headerLine, ...lines].join("\n");
+}
+
+function downloadCsv(rows: AvailabilityRow[]) {
+  const csv = toCsv(rows);
+  // BOM so Excel opens UTF-8 correctly
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fname = `availability_${now.getFullYear()}-${pad(
+    now.getMonth() + 1
+  )}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.csv`;
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 // -------------- Component --------------
 
@@ -401,6 +461,15 @@ export default function AvailabilityPage() {
             )}
           </div>
           <div className="border rounded-xl bg-white shadow overflow-auto max-h-[560px]">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => downloadCsv(filtered)}
+              disabled={filtered.length === 0 || loading}
+              title="Download current table as CSV"
+            >
+              Download CSV
+            </Button>
             <Table>
               <TableHeader className="bg-blue-100 text-blue-900 sticky top-0 z-10">
                 <TableRow>
