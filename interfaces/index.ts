@@ -232,3 +232,56 @@ export interface siteVitals {
 }
 
 //final and clean version for traffic
+export type TrafficTrendRow = {
+  month: string;                 // e.g., "2025-01"
+  voice2g_traffic: number | null;
+  voice3g_traffic: number | null;
+  volte_traffic:   number | null;
+  data3g_gb:       number | null;
+  data4g_gb:       number | null;
+};
+
+
+export type TrafficPoint = {
+  month: string; // "YYYY-MM"
+  voice2g_traffic: number | null;
+  voice3g_traffic: number | null;
+  volte_traffic: number | null;
+  data3g_gb: number | null;
+  data4g_gb: number | null;
+};
+
+export type AvailabilityPoint = {
+  month: string; // "YYYY-MM" (as stored in avail.month)
+  availability: number | null;
+};
+
+export type ComplaintsPoint = {
+  month: string; // "YYYY-MM"
+  complaints_count: number; // integer
+};
+
+export type SiteTrendsBundle = {
+  traffic: TrafficPoint[];
+  availability: AvailabilityPoint[];
+  complaints: ComplaintsPoint[];
+};
+/** One row of site availability for a month (0..100%). */
+export type AvailabilityTrendRow = {
+  month: string;                 // e.g., "2025-01"
+  availability: number | null;   // percentage (0..100), null if missing
+};
+
+/** One row of complaint counts for a month. */
+export type ComplaintsTrendRow = {
+  month: string;                 // e.g., "2025-01"
+  complaints_count: number;      // integer >= 0
+};
+
+/** Optional: if you also return revenue series. */
+export type RevenueTrendRow = {
+  month: string;                 // e.g., "2025-01"
+  voice_revenue: number | null;
+  data_revenue:  number | null;
+  total_revenue: number | null;
+};

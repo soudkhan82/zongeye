@@ -1,4 +1,3 @@
-// app/availability/page.tsx
 "use client";
 import { circleColorBySiteClass, colorForSiteClass } from "@/lib/mapColors";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -32,7 +31,8 @@ import {
 
 import { getAvailabilityPoints } from "@/app/actions/avail";
 import { getSubregions } from "@/app/actions/filters";
-import Link from "next/link";
+
+// ❌ removed: import TrendsClientMany from "../ssl/components/TrendClientMany";
 
 // ---------------- Types ----------------
 
@@ -68,10 +68,10 @@ type FeatureCollectionPoint<P = FeatureProps> = GeoJSON.FeatureCollection<
   GeoJSON.Point,
   P
 >;
+
 // CSV utils
 function csvEscape(v: unknown): string {
   const s = v == null ? "" : String(v);
-  // wrap in quotes if it contains comma, quote, or newline; escape quotes
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
@@ -110,7 +110,6 @@ function toCsv(rows: AvailabilityRow[]): string {
 
 function downloadCsv(rows: AvailabilityRow[]) {
   const csv = toCsv(rows);
-  // BOM so Excel opens UTF-8 correctly
   const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
 
@@ -141,6 +140,7 @@ export default function AvailabilityPage() {
   const [pendingSubregion, setPendingSubregion] = useState<string | null>(null);
   const [pendingClass, setPendingClass] = useState<SiteClass | null>(null);
   const [pendingRange, setPendingRange] = useState<[number, number]>([0, 100]);
+  const [nameInput, setNameInput] = useState<string>("");
 
   // ✅ Applied filters (used to fetch)
   const [selectedSubregion, setSelectedSubregion] = useState<string | null>(
@@ -224,6 +224,8 @@ export default function AvailabilityPage() {
         (r.address?.toLowerCase() ?? "").includes(q)
     );
   }, [rows, search]);
+
+  // ✅ Build trends link with repeated ?name= params (capped)
 
   // GeoJSON
   const geojson: FeatureCollectionPoint = useMemo(
@@ -400,7 +402,6 @@ export default function AvailabilityPage() {
                   id="availability-circles"
                   type="circle"
                   paint={{
-                    // size + stroke
                     "circle-radius": [
                       "interpolate",
                       ["linear"],
@@ -417,8 +418,6 @@ export default function AvailabilityPage() {
                     "circle-stroke-color": "#ffffff",
                     "circle-stroke-width": 1,
                     "circle-opacity": 0.9,
-
-                    // 🔴 color by SiteClassification via helper
                     "circle-color": circleColorBySiteClass(),
                   }}
                 />
@@ -456,20 +455,54 @@ export default function AvailabilityPage() {
             <h2 className="text-lg font-semibold">
               Plotted Sites ({filtered.length})
             </h2>
-            {loading && (
-              <span className="text-sm text-muted-foreground">Loading…</span>
-            )}
+            <div className="flex items-center gap-2">
+              {loading && (
+                <span className="text-sm text-muted-foreground">Loading…</span>
+              )}
+
+              {/* ✅ Open Trends Page (disabled if no rows) */}
+            </div>
           </div>
+
           <div className="border rounded-xl bg-white shadow overflow-auto max-h-[560px]">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => downloadCsv(filtered)}
-              disabled={filtered.length === 0 || loading}
-              title="Download current table as CSV"
-            >
-              Download CSV
-            </Button>
+            {/* CSV download for current table */}
+            <div className="p-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => downloadCsv(filtered)}
+                disabled={filtered.length === 0 || loading}
+                title="Download current table as CSV"
+              >
+                Download CSV
+              </Button>
+            </div>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Label className="mb-1 block">Open single-site trends</Label>
+                <Input
+                  placeholder="Type or click a row to autofill site name…"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                />
+              </div>
+              <Button
+                className="mt-6"
+                onClick={() => {
+                  const n = nameInput.trim();
+                  if (!n) return;
+                  window.open(
+                    `/ssl/vitals/${encodeURIComponent(nameInput.trim())}`,
+                    "_blank",
+                    "noopener,noreferrer"
+                  );
+                }}
+                disabled={!nameInput.trim()}
+                title="Open TrendClient for this site"
+              >
+                Open Trend
+              </Button>
+            </div>
             <Table>
               <TableHeader className="bg-blue-100 text-blue-900 sticky top-0 z-10">
                 <TableRow>
@@ -486,17 +519,14 @@ export default function AvailabilityPage() {
                   <TableRow
                     key={`${r.name}-${r.grid ?? ""}`}
                     className="cursor-pointer hover:bg-blue-50"
-                    onClick={() => flyTo(r)}
+                    onClick={() => {
+                      flyTo(r);
+                      setNameInput(r.name);
+                    }}
                   >
-                    <Link
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href={`/ssl/vitals/${r.name}`}
-                    >
-                      <TableCell className="whitespace-nowrap">
-                        {r.name}
-                      </TableCell>
-                    </Link>
+                    <TableCell className="whitespace-nowrap">
+                      {r.name}
+                    </TableCell>
 
                     <TableCell>{r.avg_availability.toFixed(2)}</TableCell>
                     <TableCell>{r.siteclassification}</TableCell>

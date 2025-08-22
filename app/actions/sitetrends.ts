@@ -2,33 +2,11 @@
 // Client-safe helper (no "use server") so you can import from client components too.
 
 "use server";
+import { AvailabilityPoint, ComplaintsPoint, SiteTrendsBundle, TrafficPoint } from "@/interfaces";
 import supabase from "../config/supabase-config";
 
 /** === Types === */
-export type TrafficPoint = {
-  month: string; // "YYYY-MM"
-  voice2g_traffic: number | null;
-  voice3g_traffic: number | null;
-  volte_traffic: number | null;
-  data3g_gb: number | null;
-  data4g_gb: number | null;
-};
 
-export type AvailabilityPoint = {
-  month: string; // "YYYY-MM" (as stored in avail.month)
-  availability: number | null;
-};
-
-export type ComplaintsPoint = {
-  month: string; // "YYYY-MM"
-  complaints_count: number; // integer
-};
-
-export type SiteTrendsBundle = {
-  traffic: TrafficPoint[];
-  availability: AvailabilityPoint[];
-  complaints: ComplaintsPoint[];
-};
 
 /** === Guards / helpers === */
 function assertName(name: string): string {
@@ -101,3 +79,7 @@ export async function getAllTrends(name: string): Promise<SiteTrendsBundle> {
   ]);
   return { traffic, availability, complaints };
 }
+
+
+
+

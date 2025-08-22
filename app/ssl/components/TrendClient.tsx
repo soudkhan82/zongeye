@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getAllTrends, type SiteTrendsBundle } from "@/app/actions/sitetrends";
+import { getAllTrends } from "@/app/actions/sitetrends";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { SiteTrendsBundle } from "@/interfaces";
 
 type Props = { name: string };
 
