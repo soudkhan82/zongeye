@@ -90,8 +90,8 @@ export default function ComplaintsPage() {
         ) {
           setSubregion(list[0]);
         }
-      } catch (e: any) {
-        if (mounted) setErr(e?.message ?? "Failed to load subregions");
+      } catch (e) {
+        if (mounted) setErr("Failed to load subregions");
       }
     })();
     return () => {
@@ -105,8 +105,8 @@ export default function ComplaintsPage() {
     try {
       const data = await getComplaintsDashboard(subregion || null);
       setPayload(data);
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to load data");
+    } catch (e) {
+      setErr("Failed to load data");
     } finally {
       setLoading(false);
     }
@@ -193,8 +193,8 @@ export default function ComplaintsPage() {
       try {
         const data = await getSiteTrend(selectedName, null, null);
         setTrend(data);
-      } catch (e: any) {
-        setTrendErr(e?.message ?? "Failed to load trend");
+      } catch (e) {
+        setTrendErr("Failed to load trend");
       } finally {
         setTrendLoading(false);
       }
@@ -296,7 +296,7 @@ export default function ComplaintsPage() {
                       longitude={p.lng}
                       latitude={p.lat}
                       anchor="center"
-                      onClick={(e: any) => {
+                      onClick={(e) => {
                         e.originalEvent?.stopPropagation?.();
                         setSelected(p);
                       }}
