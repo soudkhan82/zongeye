@@ -51,8 +51,6 @@ import {
   CartesianGrid,
   Tooltip as RTooltip,
   Legend,
-  AreaChart,
-  Area,
 } from "recharts";
 
 export default function ComplaintsPage() {

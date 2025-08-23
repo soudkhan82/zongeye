@@ -30,7 +30,6 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
-import { useRouter } from "next/navigation";
 import { getAvailabilityPoints } from "@/app/actions/avail";
 import { getSubregions } from "@/app/actions/filters";
 
@@ -75,7 +74,6 @@ const AV_COLOR_ORANGE = "#FF8C00"; // 91–95
 const AV_COLOR_GREEN = "#008000"; // 96–100
 
 export default function AvailabilityPage() {
-  const router = useRouter();
   const mapRef = useRef<MapRef | null>(null);
 
   // filters (default subregion = "North-1")
