@@ -75,6 +75,16 @@ export default function ComplaintsPage() {
   const [trendLoading, setTrendLoading] = useState<boolean>(false);
   const [trendErr, setTrendErr] = useState<string | null>(null);
 
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof Error) return err.message;
+    if (typeof err === "string") return err;
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return "Failed to load data";
+    }
+  }
+
   // Load subregions
   useEffect(() => {
     let mounted = true;
@@ -90,8 +100,8 @@ export default function ComplaintsPage() {
         ) {
           setSubregion(list[0]);
         }
-      } catch (e) {
-        if (mounted) setErr("Failed to load subregions");
+      } catch (e: unknown) {
+        if (mounted) setErr(getErrorMessage(e));
       }
     })();
     return () => {
@@ -105,8 +115,8 @@ export default function ComplaintsPage() {
     try {
       const data = await getComplaintsDashboard(subregion || null);
       setPayload(data);
-    } catch (e) {
-      setErr("Failed to load data");
+    } catch (e: unknown) {
+      setErr(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -193,8 +203,8 @@ export default function ComplaintsPage() {
       try {
         const data = await getSiteTrend(selectedName, null, null);
         setTrend(data);
-      } catch (e) {
-        setTrendErr("Failed to load trend");
+      } catch (e: unknown) {
+        setErr(getErrorMessage(e));
       } finally {
         setTrendLoading(false);
       }
