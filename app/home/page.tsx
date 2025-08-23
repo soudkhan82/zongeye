@@ -1,112 +1,147 @@
+// app/page.tsx (or wherever you want this)
+// "use client" must be at top for router + animations
 "use client";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import Link from "next/link";
 
-export default function HomePge() {
+import { useRouter } from "next/navigation";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion } from "framer-motion";
+
+type TabDef = {
+  value: string;
+  label: string;
+  href: string;
+  image: string; // path in /public/images
+  subtitle: string;
+};
+
+const TABS: TabDef[] = [
+  {
+    value: "Performance",
+    label: "Metrices",
+    href: "/rt",
+    image: "/images/kpi.jpg",
+    subtitle: "Performance Metrices",
+  },
+  {
+    value: "complaints",
+    label: "Complaints",
+    href: "/complaints",
+    image: "/images/complaints.jpg",
+    subtitle: "Customer issues & trends",
+  },
+  {
+    value: "avail",
+    label: "Availability",
+    href: "/avail",
+    image: "/images/availability.jpg",
+    subtitle: "Uptime & outages",
+  },
+  {
+    value: "tasks",
+    label: "Tasks",
+    href: "/tasks",
+    image: "/images/tasks.jpg",
+    subtitle: "Actions, owners, SLAs",
+  },
+  {
+    value: "ssl",
+    label: "Network",
+    href: "/ssl",
+    image: "/images/ssl.jpg",
+    subtitle: "Network Overview",
+  },
+];
+
+export default function Page() {
+  const router = useRouter();
+
+  const handleTabChange = (value: string) => {
+    const target = TABS.find((t) => t.value === value);
+    if (target) router.push(target.href);
+  };
+
   return (
-    <div className="flex flex-col">
-      {/* Navbar placeholder */}
-      <div className="flex justify-between items-center py-5 px-20"></div>
+    <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black text-white">
+      <div className="mx-auto w-full max-w-7xl px-4 py-10">
+        <header className="mb-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+            ZongEye — Quick Launch
+          </h1>
+          <p className="mt-2 text-slate-300">
+            Jump straight into KPIs, Complaints, Availability, Tasks, or Sites.
+          </p>
+        </header>
 
-      <main
-        className="flex flex-col items-center justify-center min-h-screen text-gray-900 relative"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1600&auto=format&fit=crop')", // 👈 global background
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundAttachment: "fixed", // parallax-like effect
-        }}
-      >
-        {/* Optional overlay to keep text readable */}
-        <div className="absolute inset-0 bg-black/30 z-0" />
-
-        {/* Hero Section with background */}
-        <section className="relative w-full z-10">
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative container mx-auto px-4 py-20 flex flex-col md:flex-row items-center gap-10 text-white">
-            {/* Text Content */}
-            <div className="flex-1 text-center md:text-left space-y-6">
-              <h1 className="text-5xl font-bold leading-tight drop-shadow">
-                Transforming projects through{" "}
-                <span className="text-blue-400">Technology</span>
-              </h1>
-              <p className="text-lg max-w-xl text-gray-200">
-                See your data. Know your business. Act with confidence
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg">
-                  Get Started
-                </Button>
-                <Button
-                  variant="outline"
-                  className="px-6 py-3 rounded-lg text-lg border-white text-black hover:bg-amber-300 hover:text-black"
-                >
-                  Learn More
-                </Button>
-              </div>
-            </div>
-
-            {/* Hero Image */}
-            <div className="flex-1 relative h-96 w-full">
-              <Image
-                src="/telecom.png"
-                alt="Telecom Illustration"
-                fill
-                className="object-contain rounded-2xl shadow-lg"
-                priority
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section with background */}
-        <section className="relative w-full z-10">
-          <div className="relative container mx-auto px-4 py-16 grid md:grid-cols-3 gap-8 text-center">
-            {[
-              {
-                title: "On Air Network Dashboard",
-                desc: "Blazing fast with Server Side Rendering (SSR).",
-                route: "/ssl/Dashboard",
-                bg: "https://images.unsplash.com/photo-1581091215367-59ab6a9b4b9b?q=80&w=1600&auto=format&fit=crop",
-              },
-              {
-                title: "Intuitive Visualizations",
-                desc: "World-class contemporary UI Visuals with interactive controls",
-                route: "/rt/kpi",
-                bg: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1600&auto=format&fit=crop",
-              },
-              {
-                title: "Interactive Geospatial Analysis",
-                desc: "Blazing fast with Server Side Rendering (SSR)",
-                route: "/ssl",
-                bg: "https://images.unsplash.com/photo-1502920514313-52581002a659?q=80&w=1600&auto=format&fit=crop",
-              },
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="relative rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden h-60 flex flex-col justify-center items-center text-white"
-                style={{
-                  backgroundImage: `url(${feature.bg})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
+        <Tabs
+          defaultValue="rt"
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
+          {/* We style the TabsList as a responsive grid of big, image-backed tabs */}
+          <TabsList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 bg-transparent p-0">
+            {TABS.map((t) => (
+              <TabsTrigger
+                key={t.value}
+                value={t.value}
+                title={t.label}
+                className={[
+                  "group relative overflow-hidden rounded-2xl border border-white/10",
+                  "h-44 md:h-56 p-0 text-left shadow-lg",
+                  "bg-slate-800/30 backdrop-blur",
+                  "data-[state=active]:ring-2 data-[state=active]:ring-indigo-400",
+                ].join(" ")}
               >
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/50" />
-                {/* Content */}
-                <div className="relative z-10 p-6">
-                  <h3 className="text-xl font-semibold mb-3">
-                    <Link href={`${feature.route}`}>{feature.title}</Link>
-                  </h3>
-                  <p className="text-gray-200">{feature.desc}</p>
+                {/* Background image */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{
+                    backgroundImage: `url(${t.image})`,
+                  }}
+                />
+
+                {/* Subtle dark overlay */}
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-300" />
+
+                {/* Animated sheen on hover */}
+                <div className="pointer-events-none absolute -inset-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-[1200ms] ease-out [background:linear-gradient(120deg,transparent,rgba(255,255,255,0.18),transparent)]" />
                 </div>
-              </div>
+
+                {/* Content */}
+                <motion.div
+                  className="relative z-10 flex h-full flex-col justify-end p-4"
+                  initial={{ y: 6, opacity: 0.92 }}
+                  whileHover={{ y: 0, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                >
+                  <div className="text-sm uppercase tracking-wider text-white/80">
+                    {t.subtitle}
+                  </div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <h2 className="text-xl md:text-2xl font-semibold drop-shadow">
+                      {t.label}
+                    </h2>
+
+                    {/* tiny pulse dot */}
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                    </span>
+                  </div>
+
+                  {/* bottom gradient edge for depth */}
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
+                </motion.div>
+              </TabsTrigger>
             ))}
-          </div>
-        </section>
-      </main>
-    </div>
+          </TabsList>
+        </Tabs>
+
+        {/* Helpful hint */}
+        <p className="mt-6 text-center text-xs text-slate-400">
+          Tip: Hover a tab to preview, click to open the section.
+        </p>
+      </div>
+    </main>
   );
 }

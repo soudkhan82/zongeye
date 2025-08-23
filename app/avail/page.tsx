@@ -1,6 +1,7 @@
+// app/availability/page.tsx
 "use client";
-import { circleColorBySiteClass, colorForSiteClass } from "@/lib/mapColors";
-import { useEffect, useMemo, useRef, useState } from "react";
+
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import maplibregl, {
   type MapLayerMouseEvent,
   type MapGeoJSONFeature,
@@ -29,13 +30,11 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
+import { useRouter } from "next/navigation";
 import { getAvailabilityPoints } from "@/app/actions/avail";
 import { getSubregions } from "@/app/actions/filters";
 
-// ❌ removed: import TrendsClientMany from "../ssl/components/TrendClientMany";
-
 // ---------------- Types ----------------
-
 type SiteClass = "Platinum" | "Gold" | "Strategic" | "Silver" | "Bronze";
 
 type AvailabilityRow = {
@@ -69,93 +68,38 @@ type FeatureCollectionPoint<P = FeatureProps> = GeoJSON.FeatureCollection<
   P
 >;
 
-// CSV utils
-function csvEscape(v: unknown): string {
-  const s = v == null ? "" : String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
-
-function toCsv(rows: AvailabilityRow[]): string {
-  const headers = [
-    "Name",
-    "Availability %",
-    "Class",
-    "SubRegion",
-    "Grid",
-    "Address",
-    "Latitude",
-    "Longitude",
-  ];
-  const headerLine = headers.map(csvEscape).join(",");
-
-  const lines = rows.map((r) =>
-    [
-      r.name,
-      typeof r.avg_availability === "number"
-        ? r.avg_availability.toFixed(2)
-        : "",
-      r.siteclassification ?? "",
-      r.subregion ?? "",
-      r.grid ?? "",
-      r.address ?? "",
-      r.latitude,
-      r.longitude,
-    ]
-      .map(csvEscape)
-      .join(",")
-  );
-
-  return [headerLine, ...lines].join("\n");
-}
-
-function downloadCsv(rows: AvailabilityRow[]) {
-  const csv = toCsv(rows);
-  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const fname = `availability_${now.getFullYear()}-${pad(
-    now.getMonth() + 1
-  )}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.csv`;
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fname;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-// -------------- Component --------------
+// -------------- Helpers ----------------
+const AV_COLOR_MAROON = "#800000"; // 0–50
+const AV_COLOR_RED = "#FF0000"; // 51–90
+const AV_COLOR_ORANGE = "#FF8C00"; // 91–95
+const AV_COLOR_GREEN = "#008000"; // 96–100
 
 export default function AvailabilityPage() {
+  const router = useRouter();
   const mapRef = useRef<MapRef | null>(null);
 
-  // options
+  // filters (default subregion = "North-1")
   const [subregions, setSubregions] = useState<string[]>([]);
-
-  // 🔧 UI (pending) filters
-  const [pendingSubregion, setPendingSubregion] = useState<string | null>(null);
-  const [pendingClass, setPendingClass] = useState<SiteClass | null>(null);
-  const [pendingRange, setPendingRange] = useState<[number, number]>([0, 100]);
-  const [nameInput, setNameInput] = useState<string>("");
-
-  // ✅ Applied filters (used to fetch)
-  const [selectedSubregion, setSelectedSubregion] = useState<string | null>(
-    null
+  const [selectedSubregion, setSelectedSubregion] = useState<string>("North-1");
+  const [selectedClass, setSelectedClass] = useState<SiteClass | null>(
+    "Platinum"
   );
-  const [selectedClass, setSelectedClass] = useState<SiteClass | null>(null);
   const [availRange, setAvailRange] = useState<[number, number]>([0, 100]);
-
-  // local search (client-side only)
   const [search, setSearch] = useState<string>("");
 
-  // data / states
+  // dirty tracking (changes to dropdowns/slider enable the Filter button)
+  const [isDirty, setIsDirty] = useState<boolean>(false);
+
+  // data
   const [rows, setRows] = useState<AvailabilityRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // map UI state
   const [hoverInfo, setHoverInfo] = useState<HoverInfo>(null);
+  const [selectedInfo, setSelectedInfo] = useState<HoverInfo>(null);
+
+  // table controls
+  const [nameInput, setNameInput] = useState<string>("");
 
   // map initial view (Pakistan-ish)
   const initialViewState = { longitude: 69.3451, latitude: 30.3753, zoom: 4.5 };
@@ -165,55 +109,46 @@ export default function AvailabilityPage() {
     getSubregions().then((subs) => setSubregions(subs ?? []));
   }, []);
 
-  // fetch points WHEN APPLIED FILTERS CHANGE
+  // mark filters as dirty when user changes dropdowns/slider
   useEffect(() => {
-    const run = async () => {
-      setLoading(true);
-      try {
-        const data = await getAvailabilityPoints(
-          selectedSubregion ?? undefined,
-          selectedClass ?? undefined,
-          availRange[0],
-          availRange[1]
-        );
-        setRows(
-          (data ?? []).map((r: AvailabilityRow) => ({
-            name: r.name,
-            subregion: r.subregion ?? null,
-            siteclassification: r.siteclassification,
-            grid: r.grid ?? null,
-            address: r.address ?? null,
-            latitude: Number(r.latitude),
-            longitude: Number(r.longitude),
-            avg_availability: Number(r.avg_availability),
-          }))
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    run();
+    setIsDirty(true);
   }, [selectedSubregion, selectedClass, availRange]);
 
-  // ▶️ Apply button handler
-  const applyFilters = () => {
-    setSelectedSubregion(pendingSubregion);
-    setSelectedClass(pendingClass);
-    setAvailRange(pendingRange);
-  };
+  // apply filters (manual trigger)
+  const applyFilters = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getAvailabilityPoints(
+        selectedSubregion ?? undefined,
+        selectedClass ?? undefined,
+        availRange[0],
+        availRange[1]
+      );
+      setRows(
+        (data ?? []).map((r: AvailabilityRow) => ({
+          name: r.name,
+          subregion: r.subregion ?? null,
+          siteclassification: r.siteclassification,
+          grid: r.grid ?? null,
+          address: r.address ?? null,
+          latitude: Number(r.latitude),
+          longitude: Number(r.longitude),
+          avg_availability: Number(r.avg_availability),
+        }))
+      );
+    } finally {
+      setLoading(false);
+      setIsDirty(false);
+    }
+  }, [selectedSubregion, selectedClass, availRange]);
 
-  // 🔄 Clear filters (resets both UI + applied, triggers fetch via effect)
-  const clearFilters = () => {
-    setPendingSubregion(null);
-    setPendingClass(null);
-    setPendingRange([0, 100]);
-    setSearch("");
-    setSelectedSubregion(null);
-    setSelectedClass(null);
-    setAvailRange([0, 100]);
-  };
+  // initial fetch with defaults (North-1, 0–100, etc.)
+  useEffect(() => {
+    void applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // local search
+  // local search (client-side)
   const filtered = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
@@ -225,8 +160,6 @@ export default function AvailabilityPage() {
     );
   }, [rows, search]);
 
-  // ✅ Build trends link with repeated ?name= params (capped)
-
   // GeoJSON
   const geojson: FeatureCollectionPoint = useMemo(
     () => ({
@@ -237,7 +170,10 @@ export default function AvailabilityPage() {
         )
         .map<GeoJSON.Feature<GeoJSON.Point, FeatureProps>>((r) => ({
           type: "Feature",
-          geometry: { type: "Point", coordinates: [r.longitude, r.latitude] },
+          geometry: {
+            type: "Point",
+            coordinates: [r.longitude, r.latitude],
+          },
           properties: {
             name: r.name,
             availability: r.avg_availability,
@@ -251,8 +187,9 @@ export default function AvailabilityPage() {
     [filtered]
   );
 
-  // hover handlers (typed)
+  // hover handlers
   const onMouseMove = (e: MapLayerMouseEvent) => {
+    if (selectedInfo) return; // suppress hover while selection popup is open
     const feature: MapGeoJSONFeature | undefined = e.features?.[0];
     if (!feature || feature.geometry.type !== "Point") {
       setHoverInfo(null);
@@ -260,35 +197,63 @@ export default function AvailabilityPage() {
     }
     const coords = (feature.geometry as GeoJSON.Point).coordinates;
     const props = feature.properties as unknown as FeatureProps | undefined;
-
     if (!props || !Array.isArray(coords) || coords.length < 2) {
       setHoverInfo(null);
       return;
     }
     const [lng, lat] = coords as [number, number];
-    setHoverInfo({
-      longitude: lng,
-      latitude: lat,
-      props: {
-        name: String(props.name),
-        availability: Number(props.availability),
-        siteclassification: String(props.siteclassification),
-        subregion: String(props.subregion),
-        grid: String(props.grid),
-        address: String(props.address),
-      },
-    });
+    setHoverInfo({ longitude: lng, latitude: lat, props });
   };
   const onLeave = () => setHoverInfo(null);
 
-  // row click → fly to
-  const flyTo = (r: AvailabilityRow) => {
-    if (!mapRef.current) return;
-    mapRef.current.flyTo({
-      center: [r.longitude, r.latitude],
-      zoom: 10,
+  // map click -> select + input + popup
+  const onMapClick = (e: MapLayerMouseEvent) => {
+    const feature: MapGeoJSONFeature | undefined = e.features?.[0];
+    if (!feature || feature.geometry.type !== "Point") return;
+    const coords = (feature.geometry as GeoJSON.Point).coordinates as [
+      number,
+      number
+    ];
+    const props = feature.properties as unknown as FeatureProps | undefined;
+    if (!props) return;
+    setSelectedInfo({ longitude: coords[0], latitude: coords[1], props });
+    setNameInput(String(props.name ?? ""));
+    mapRef.current?.flyTo({
+      center: coords,
+      zoom: 11,
       duration: 900,
     });
+  };
+
+  // table row click -> select + input + popup
+  const handleRowClick = (r: AvailabilityRow) => {
+    setNameInput(r.name);
+    setSelectedInfo({
+      longitude: r.longitude,
+      latitude: r.latitude,
+      props: {
+        name: r.name,
+        availability: r.avg_availability,
+        siteclassification: String(r.siteclassification),
+        subregion: r.subregion ?? "-",
+        grid: r.grid ?? "-",
+        address: r.address ?? "-",
+      },
+    });
+    mapRef.current?.flyTo({
+      center: [r.longitude, r.latitude],
+      zoom: 11,
+      duration: 900,
+    });
+  };
+
+  // open trends
+  const openTrend = () => {
+    const n = nameInput.trim();
+    if (!n) return;
+    const url = `/ssl/vitals/${encodeURIComponent(n)}`;
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (w) w.opener = null;
   };
 
   const classes: SiteClass[] = [
@@ -304,12 +269,12 @@ export default function AvailabilityPage() {
       <h1 className="text-2xl font-semibold">Availability Geo View</h1>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
-        <div className="md:col-span-1">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <div>
           <Label className="mb-1 block">SubRegion</Label>
           <Select
-            onValueChange={(v) => setPendingSubregion(v)}
-            value={pendingSubregion ?? ""}
+            onValueChange={(v) => setSelectedSubregion(v)}
+            value={selectedSubregion}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a subregion" />
@@ -324,11 +289,11 @@ export default function AvailabilityPage() {
           </Select>
         </div>
 
-        <div className="md:col-span-1">
+        <div>
           <Label className="mb-1 block">Site Classification</Label>
           <Select
-            onValueChange={(v) => setPendingClass(v as SiteClass)}
-            value={pendingClass ?? ""}
+            onValueChange={(v) => setSelectedClass(v as SiteClass)}
+            value={selectedClass ?? ""}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All classes" />
@@ -345,40 +310,45 @@ export default function AvailabilityPage() {
 
         <div className="md:col-span-2">
           <Label className="mb-1 block">
-            Availability Range: {pendingRange[0]}% – {pendingRange[1]}%
+            Availability Range: {availRange[0]}% – {availRange[1]}%
           </Label>
           <Slider
             min={0}
             max={100}
             step={1}
-            value={pendingRange}
+            value={availRange}
             onValueChange={(v) =>
-              setPendingRange([v[0] ?? 0, v[1] ?? 100] as [number, number])
+              setAvailRange([v[0] ?? 0, v[1] ?? 100] as [number, number])
             }
           />
         </div>
 
-        <div className="md:col-span-1">
-          <Label className="mb-1 block">Search (Name/Grid/Address)</Label>
-          <Input
-            placeholder="e.g., Lahore, SGRID-12, Site-001"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* ➕ Apply / Clear */}
-        <div className="flex gap-2 md:col-span-1">
-          <Button onClick={applyFilters} disabled={loading} className="w-full">
-            {loading ? "Applying…" : "Apply Filters"}
+        {/* Buttons: Filter + Clear side by side */}
+        <div className="flex items-end">
+          <Button
+            onClick={() => void applyFilters()}
+            className="w-full"
+            disabled={!isDirty && rows.length > 0}
+            title="Apply filters"
+          >
+            Filter
           </Button>
+        </div>
+        <div className="flex items-end">
           <Button
             variant="secondary"
-            onClick={clearFilters}
-            disabled={loading}
             className="w-full"
+            onClick={() => {
+              setSelectedSubregion("North-1"); // reset to default
+              setSelectedClass(null);
+              setAvailRange([0, 100]);
+              setSearch("");
+              setNameInput("");
+              setSelectedInfo(null);
+              setIsDirty(true);
+            }}
           >
-            Clear
+            Clear Filters
           </Button>
         </div>
       </div>
@@ -386,8 +356,8 @@ export default function AvailabilityPage() {
       {/* Map + Table */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Map */}
-        <Card className="col-span-1 xl:col-span-2 overflow-hidden">
-          <div className="h-[600px]">
+        <Card className="col-span-1 xl:col-span-2 overflow-hidden p-4">
+          <div className="h-[600px] rounded-lg overflow-hidden">
             <Map
               ref={mapRef}
               initialViewState={initialViewState}
@@ -396,6 +366,7 @@ export default function AvailabilityPage() {
               interactiveLayerIds={["availability-circles"]}
               onMouseMove={onMouseMove}
               onMouseLeave={onLeave}
+              onClick={onMapClick}
             >
               <Source id="availability" type="geojson" data={geojson}>
                 <Layer
@@ -408,22 +379,83 @@ export default function AvailabilityPage() {
                       ["zoom"],
                       4,
                       3,
+                      6,
+                      4.5,
                       8,
                       6,
+                      10,
+                      8,
                       12,
-                      9,
+                      10,
                       14,
                       12,
                     ],
                     "circle-stroke-color": "#ffffff",
-                    "circle-stroke-width": 1,
+                    "circle-stroke-width": 0.6,
                     "circle-opacity": 0.9,
-                    "circle-color": circleColorBySiteClass(),
+                    // Color by availability thresholds:
+                    // 0–50 maroon, 51–90 red, 91–95 orange, 96–100 green
+                    "circle-color": [
+                      "step",
+                      ["get", "availability"],
+                      AV_COLOR_MAROON, // < 51
+                      51,
+                      AV_COLOR_RED, // 51–90
+                      91,
+                      AV_COLOR_ORANGE, // 91–95
+                      96,
+                      AV_COLOR_GREEN, // 96–100
+                    ],
                   }}
                 />
               </Source>
 
-              {hoverInfo && (
+              {/* Selected popup */}
+              {selectedInfo && (
+                <Popup
+                  longitude={selectedInfo.longitude}
+                  latitude={selectedInfo.latitude}
+                  anchor="top"
+                  closeButton
+                  onClose={() => setSelectedInfo(null)}
+                >
+                  <div className="text-sm">
+                    <div className="font-semibold">
+                      {selectedInfo.props.name}
+                    </div>
+                    <div>
+                      Availability:{" "}
+                      <span className="font-medium">
+                        {selectedInfo.props.availability.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div>Class: {selectedInfo.props.siteclassification}</div>
+                    <div>SubRegion: {selectedInfo.props.subregion}</div>
+                    <div>Grid: {selectedInfo.props.grid}</div>
+                    <div>Address: {selectedInfo.props.address}</div>
+                    <Button
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => {
+                        const url = `/ssl/vitals/${encodeURIComponent(
+                          selectedInfo!.props.name
+                        )}`;
+                        const w = window.open(
+                          url,
+                          "_blank",
+                          "noopener,noreferrer"
+                        );
+                        if (w) w.opener = null;
+                      }}
+                    >
+                      Open Trend
+                    </Button>
+                  </div>
+                </Popup>
+              )}
+
+              {/* Hover popup when nothing is selected */}
+              {!selectedInfo && hoverInfo && (
                 <Popup
                   longitude={hoverInfo.longitude}
                   latitude={hoverInfo.latitude}
@@ -447,62 +479,59 @@ export default function AvailabilityPage() {
               )}
             </Map>
           </div>
+
+          {/* Availability legend */}
+          <div className="mt-3 flex flex-wrap gap-4 text-sm">
+            <LegendItem color={AV_COLOR_MAROON} label="0–50 (Maroon)" />
+            <LegendItem color={AV_COLOR_RED} label="51–90 (Red)" />
+            <LegendItem color={AV_COLOR_ORANGE} label="91–95 (Orange)" />
+            <LegendItem color={AV_COLOR_GREEN} label="96–100 (Green)" />
+          </div>
         </Card>
 
         {/* Table */}
         <Card className="col-span-1 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold">
-              Plotted Sites ({filtered.length})
-            </h2>
-            <div className="flex items-center gap-2">
-              {loading && (
-                <span className="text-sm text-muted-foreground">Loading…</span>
-              )}
-
-              {/* ✅ Open Trends Page (disabled if no rows) */}
+          {/* Selected site + actions */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
+            <div className="flex-1">
+              <Label className="mb-1 block">Selected Site</Label>
+              <Input
+                placeholder="Click a row or marker…"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+              />
             </div>
-          </div>
-
-          <div className="border rounded-xl bg-white shadow overflow-auto max-h-[560px]">
-            {/* CSV download for current table */}
-            <div className="p-2">
+            <div className="flex gap-2 items-end">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => downloadCsv(filtered)}
-                disabled={filtered.length === 0 || loading}
-                title="Download current table as CSV"
-              >
-                Download CSV
-              </Button>
-            </div>
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Label className="mb-1 block">Open single-site trends</Label>
-                <Input
-                  placeholder="Type or click a row to autofill site name…"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                />
-              </div>
-              <Button
-                className="mt-6"
-                onClick={() => {
-                  const n = nameInput.trim();
-                  if (!n) return;
-                  window.open(
-                    `/ssl/vitals/${encodeURIComponent(nameInput.trim())}`,
-                    "_blank",
-                    "noopener,noreferrer"
-                  );
-                }}
+                onClick={openTrend}
                 disabled={!nameInput.trim()}
-                title="Open TrendClient for this site"
+                title="Open site trends"
               >
                 Open Trend
               </Button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold">
+              Plotted Sites ({filtered.length})
+            </h2>
+            {loading && (
+              <span className="text-sm text-muted-foreground">Loading…</span>
+            )}
+          </div>
+
+          {/* Quick search */}
+          <div className="mb-2">
+            <Label className="mb-1 block">Search (Name/Grid/Address)</Label>
+            <Input
+              placeholder="e.g., Lahore, SGRID-12, Site-001"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="border rounded-xl bg-white shadow overflow-auto max-h-[500px]">
             <Table>
               <TableHeader className="bg-blue-100 text-blue-900 sticky top-0 z-10">
                 <TableRow>
@@ -519,15 +548,11 @@ export default function AvailabilityPage() {
                   <TableRow
                     key={`${r.name}-${r.grid ?? ""}`}
                     className="cursor-pointer hover:bg-blue-50"
-                    onClick={() => {
-                      flyTo(r);
-                      setNameInput(r.name);
-                    }}
+                    onClick={() => handleRowClick(r)}
                   >
                     <TableCell className="whitespace-nowrap">
                       {r.name}
                     </TableCell>
-
                     <TableCell>{r.avg_availability.toFixed(2)}</TableCell>
                     <TableCell>{r.siteclassification}</TableCell>
                     <TableCell>{r.subregion ?? "-"}</TableCell>
@@ -547,20 +572,19 @@ export default function AvailabilityPage() {
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 pt-2 flex-wrap">
-        <div className="text-sm font-medium">Legend:</div>
-        {classes.map((c) => (
-          <div className="flex items-center gap-2" key={c}>
-            <span
-              className="w-3 h-3 rounded-full border"
-              style={{ backgroundColor: colorForSiteClass(c) }}
-            />
-            <span className="text-sm">{c}</span>
-          </div>
-        ))}
-      </div>
+// ------- Small legend chip component -------
+function LegendItem({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="inline-block h-3 w-3 rounded-sm border border-black/10"
+        style={{ backgroundColor: color }}
+      />
+      <span className="text-muted-foreground">{label}</span>
     </div>
   );
 }

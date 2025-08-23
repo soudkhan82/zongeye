@@ -1,107 +1,230 @@
-export default function Page() {
-  const cards = [
-    {
-      title: "Voice Traffic ",
-      subtitle: "Directional Congestional Patterns",
-      href: "/rt/voiceTraffic",
-      img: "https://www.researchgate.net/profile/Yang-Li-162/publication/342059044/figure/fig8/AS:902280238280704@1592202012901/Traffic-heat-map-of-Beijing.png",
-      badge: "Voice",
-      chips: ["2G/3G/VoLTE", "+25 KPIs", "District filter"],
-    },
-    {
-      title: "Data Traffic",
-      subtitle: "Directional congestion patterns",
-      href: "/rt/dataTraffic",
-      img: "heatmap.jpg",
-      badge: "Data",
-      chips: ["Rasters & tiles", "Sites & sectors", "Subregion filter"],
-    },
-  ];
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { getSubregions } from "@/app/actions/filters";
+import { getDistricts } from "@/app/actions/rt";
+import { getLatestPoints } from "@/app/actions/gis";
+
+import PointSizeMap, {
+  MapPoint as SizeMapPoint,
+  KpiKey,
+} from "@/app/gis/components/PointSizeMap";
+
+type LatestKpiRow = {
+  Name: string;
+  Region: string | null;
+  SubRegion: string | null;
+  District: string | null;
+  Grid: string | null;
+  Address: string | null;
+  SiteClassification: string | null;
+  Longitude: number | null;
+  Latitude: number | null;
+  Month: string | null;
+  MFULTotalRev: number | string | null;
+  MFULDataRev: number | string | null;
+  MFULVoiceRev: number | string | null;
+  data4GTrafficGB: number | string | null;
+  data3GTrafficGB: number | string | null;
+  voice2GTrafficE: number | string | null;
+  voice3GTrafficE: number | string | null;
+  voLTEVoiceTrafficE: number | string | null;
+};
+
+const KPI_OPTIONS: { key: KpiKey; label: string }[] = [
+  { key: "MFULTotalRev", label: "Total Revenue" },
+  { key: "MFULDataRev", label: "Data Revenue" },
+  { key: "MFULVoiceRev", label: "Voice Revenue" },
+  { key: "data4GTrafficGB", label: "4G Data (GB)" },
+  { key: "data3GTrafficGB", label: "3G Data (GB)" },
+  { key: "voice2GTrafficE", label: "Voice 2G (Erl)" },
+  { key: "voice3GTrafficE", label: "Voice 3G (Erl)" },
+  { key: "voLTEVoiceTrafficE", label: "VoLTE (Erl)" },
+];
+
+export default function VoiceTrafficPage() {
+  const [selectedSubRegion, setSelectedSubRegion] = useState<string>("North-1");
+  const [selDistrict, setSelDistrict] = useState<string>("");
+
+  const [subregionOptions, setSubregionOptions] = useState<string[]>([]);
+  const [districtOptions, setDistrictOptions] = useState<string[]>([]);
+  const [kpiKey, setKpiKey] = useState<KpiKey>("MFULTotalRev");
+
+  const [loading, setLoading] = useState(false);
+  const [points, setPoints] = useState<SizeMapPoint[]>([]);
+
+  // Load subregions once
+  useEffect(() => {
+    getSubregions().then(setSubregionOptions).catch(console.error);
+  }, []);
+
+  // When subregion changes, load districts
+  useEffect(() => {
+    (async () => {
+      setSelDistrict("");
+      if (!selectedSubRegion) {
+        setDistrictOptions([]);
+        return;
+      }
+      try {
+        const d = await getDistricts(selectedSubRegion);
+        setDistrictOptions(d);
+      } catch (e) {
+        console.error("Failed to load districts", e);
+        setDistrictOptions([]);
+      }
+    })();
+  }, [selectedSubRegion]);
+
+  // Fetch latest points based on filters
+  const loadPoints = async () => {
+    setLoading(true);
+    try {
+      const data = (await getLatestPoints(
+        selectedSubRegion || undefined,
+        selDistrict || undefined
+      )) as LatestKpiRow[];
+
+      const mapped: SizeMapPoint[] = data.map((r) => ({
+        Name: r.Name,
+        SubRegion: r.SubRegion,
+        District: r.District,
+        Grid: r.Grid,
+        SiteClassification: r.SiteClassification,
+        Longitude: r.Longitude,
+        Latitude: r.Latitude,
+        Address: r.Address,
+        MFULTotalRev: r.MFULTotalRev,
+        MFULDataRev: r.MFULDataRev,
+        MFULVoiceRev: r.MFULVoiceRev,
+        data4GTrafficGB: r.data4GTrafficGB,
+        data3GTrafficGB: r.data3GTrafficGB,
+        voice2GTrafficE: r.voice2GTrafficE,
+        voice3GTrafficE: r.voice3GTrafficE,
+        voLTEVoiceTrafficE: r.voLTEVoiceTrafficE,
+
+        Month: r.Month,
+      }));
+
+      setPoints(mapped);
+    } catch (e) {
+      console.error(e);
+      setPoints([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    loadPoints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const canApply = useMemo(
+    () => !!selectedSubRegion || !!selDistrict,
+    [selectedSubRegion, selDistrict]
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 p-6 md:p-10">
-      <header className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-800">
-          Geo‑Analytics
-          <span className="ml-3 inline-block align-middle text-sm md:text-base px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
-            Interactive
-          </span>
-        </h1>
-        <p className="mt-3 text-slate-600 max-w-3xl">
-          Three beautiful, clickable GIS panels. Hover to preview; click to jump
-          straight into your maps.
-        </p>
-      </header>
+    <div className="w-full p-4 space-y-4">
+      <h1 className="text-2xl font-bold text-center my-6 text-indigo-700">
+        Metrices — Point Size Map
+      </h1>
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        {cards.map((card, i) => (
-          <a
-            key={i}
-            href={card.href}
-            className="group relative block overflow-hidden rounded-3xl shadow-2xl ring-1 ring-slate-200/60 hover:ring-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 transform transition-transform duration-300 hover:scale-105"
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+        <div className="space-y-1">
+          <Label>SubRegion</Label>
+          <Select
+            value={selectedSubRegion}
+            onValueChange={(v) => {
+              setSelectedSubRegion(v);
+              setSelDistrict("");
+            }}
           >
-            <div className="relative h-[500px] overflow-hidden">
-              {" "}
-              {/* Fixed large height */}
-              <img
-                src={card.img}
-                alt={card.title}
-                className="h-full w-full object-cover opacity-60 transition-transform duration-500 ease-out group-hover:scale-110"
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select subregion" />
+            </SelectTrigger>
+            <SelectContent>
+              {subregionOptions.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <Label>District</Label>
+          <Select
+            value={selDistrict}
+            onValueChange={setSelDistrict}
+            disabled={!selectedSubRegion}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue
+                placeholder={
+                  selectedSubRegion
+                    ? "Select district"
+                    : "Select subregion first"
+                }
               />
-              <div className="absolute inset-0 bg-black/50" />
-              <div className="absolute left-6 top-6">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/95 px-5 py-2 text-base font-semibold uppercase tracking-wide text-slate-800 shadow-sm">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="h-5 w-5"
-                  >
-                    <path d="M3 11l19-7-7 19-2-8-8-2z" />
-                  </svg>
-                  {card.badge}
-                </span>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-8">
-                <h2 className="text-white text-3xl md:text-4xl font-bold drop-shadow-md">
-                  {card.title}
-                </h2>
-                <p className="mt-3 text-white text-lg md:text-xl drop-shadow-md">
-                  {card.subtitle}
-                </p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  {card.chips.map((chip, j) => (
-                    <span
-                      key={j}
-                      className="rounded-full bg-white/95 px-4 py-1.5 text-sm md:text-base font-medium text-slate-800 shadow-sm"
-                    >
-                      {chip}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-6">
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-lg font-semibold text-white shadow-md transition-all duration-300 group-hover:gap-3 group-hover:bg-emerald-500">
-                    Open map
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="h-5 w-5"
-                    >
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-400/0 via-emerald-400/10 to-emerald-400/0 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
-          </a>
-        ))}
-      </main>
+            </SelectTrigger>
+            <SelectContent>
+              {districtOptions.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {d}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* KPI selector */}
+        <div className="space-y-1">
+          <Label>Size by Metric</Label>
+          <Select value={kpiKey} onValueChange={(v) => setKpiKey(v as KpiKey)}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select KPI" />
+            </SelectTrigger>
+            <SelectContent>
+              {KPI_OPTIONS.map(({ key, label }) => (
+                <SelectItem key={key} value={key}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <Label className="opacity-0">Apply</Label>
+          <Button onClick={loadPoints} disabled={loading || !canApply}>
+            {loading ? "Loading..." : "Apply Filters"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="h-[72vh] rounded-xl border overflow-hidden">
+        {loading ? (
+          <div className="h-full flex items-center justify-center bg-muted/30">
+            Loading latest KPI points…
+          </div>
+        ) : (
+          <PointSizeMap points={points} kpiKey={kpiKey} />
+        )}
+      </div>
     </div>
   );
 }

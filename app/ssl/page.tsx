@@ -1,4 +1,4 @@
-// app/ssl/page.tsx  (or wherever your file lives)
+// app/ssl/page.tsx
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -21,13 +21,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input"; // ✅ NEW
+import { Input } from "@/components/ui/input";
 import { sslSite } from "@/interfaces";
 
 import { fetchSslSites, getGrids, getDistricts } from "@/app/actions/ssl";
 import SSlMap, { MapHandle } from "../gis/components/sslMap";
 import { getSubregions } from "../actions/filters";
-import Link from "next/link";
 
 export default function SslPage() {
   const [subregion, setSubregion] = useState<string>("North-1");
@@ -43,12 +42,12 @@ export default function SslPage() {
   const [rows, setRows] = useState<sslSite[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔎 NEW: search
+  // search
   const [search, setSearch] = useState<string>("");
 
   const onRowClick = (p: sslSite) => {
-    setSelected(p);
-    mapRef.current?.flyTo(p.longitude, p.latitude, 14);
+    setSelected(p); // drives selectedName prop -> popup in SSlMap
+    mapRef.current?.flyTo(p.longitude, p.latitude, 14); // auto-zoom
   };
 
   function clearFilters() {
@@ -57,9 +56,9 @@ export default function SslPage() {
     setDistrict(null);
     setGrids([]);
     setDistricts([]);
-    setRows([]); // clear results & markers
+    setRows([]);
     setSelected(null);
-    setSearch(""); // ✅ clear search
+    setSearch("");
   }
 
   // load subregions once
@@ -117,7 +116,7 @@ export default function SslPage() {
     })();
   }, [subregion, grid, district]);
 
-  // ✅ Client-side search filter (Name, Grid, Address)
+  // client-side search
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
@@ -134,18 +133,6 @@ export default function SslPage() {
       <h1 className="text-2xl font-bold text-center my-6 text-indigo-700">
         Geo-Analytics: SSL Sites
       </h1>
-
-      {/* Link to Trends (only when a row is selected) */}
-      {selected && (
-        <div className="text-center">
-          <Link
-            href={`/ssl/vitals/${encodeURIComponent(selected.name)}`}
-            className="inline-block px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-          >
-            View Trends for {selected.name}
-          </Link>
-        </div>
-      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3">
@@ -214,7 +201,7 @@ export default function SslPage() {
           </Select>
         </div>
 
-        {/* 🔎 Search input */}
+        {/* Search input */}
         <div className="flex-1 min-w-[240px]">
           <Input
             value={search}
@@ -264,16 +251,10 @@ export default function SslPage() {
                           : "hover:bg-accent/50"
                       }`}
                       onClick={() => onRowClick(r)}
+                      title="Click row to zoom & show popup"
                     >
-                      <TableCell className="font-medium">
-                        <Link
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          href={`/ssl/vitals/${encodeURIComponent(r.name)}`}
-                        >
-                          {r.name}
-                        </Link>
-                      </TableCell>
+                      {/* Name is plain text (no link) */}
+                      <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell>{r.district ?? "—"}</TableCell>
                       <TableCell>{r.grid ?? "—"}</TableCell>
                       <TableCell>{r.Siteclassification ?? "—"}</TableCell>
@@ -296,11 +277,11 @@ export default function SslPage() {
           </CardContent>
         </Card>
 
-        {/* Map — show filtered points */}
+        {/* Map — show filtered points; selectedName drives popup */}
         <Card className="w-full h-[400px]">
           <SSlMap
             ref={mapRef}
-            points={filteredRows} // ✅ use filtered rows
+            points={filteredRows}
             selectedName={selected?.name ?? null}
             autoFit
           />

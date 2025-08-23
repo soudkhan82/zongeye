@@ -139,7 +139,7 @@ export default function VoiceTrafficPage() {
   return (
     <div className="w-full p-4 space-y-4">
       <h1 className="text-2xl font-bold text-center my-6 text-indigo-700">
-        Latest KPI — Point Size Map
+        Metrices — Point Size Map
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
@@ -193,7 +193,7 @@ export default function VoiceTrafficPage() {
 
         {/* KPI selector */}
         <div className="space-y-1">
-          <Label>Size by KPI</Label>
+          <Label>Size by Metric</Label>
           <Select value={kpiKey} onValueChange={(v) => setKpiKey(v as KpiKey)}>
             <SelectTrigger className="w-64">
               <SelectValue placeholder="Select KPI" />
