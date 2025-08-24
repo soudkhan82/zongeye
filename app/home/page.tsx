@@ -15,7 +15,7 @@ type TabDef = {
 
 const TABS: TabDef[] = [
   {
-    value: "Performance",
+    value: "rt",
     label: "Metrices",
     href: "/rt",
     image: "/images/kpi.jpg",
