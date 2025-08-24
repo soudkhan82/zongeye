@@ -26,6 +26,86 @@ import { SiteTrendsBundle } from "@/interfaces";
 
 type Props = { name: string };
 
+/* ---------- Month parsing + sorting helpers ---------- */
+
+const MONTHS = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
+];
+
+function monthNameToIndex(s: string): number | null {
+  const i = MONTHS.indexOf(s.slice(0, 3).toLowerCase());
+  return i >= 0 ? i : null;
+}
+
+function monthToTimestamp(raw: string): number {
+  const s = String(raw).trim();
+
+  // 1) YYYY-MM
+  let m = s.match(/^(\d{4})-(\d{2})$/);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]) - 1;
+    return Date.UTC(y, mo, 1);
+  }
+
+  // 2) YYYY-MM-DD
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]) - 1;
+    const d = Number(m[3]);
+    return Date.UTC(y, mo, d);
+  }
+
+  // 3) Mon-YYYY or Month YYYY
+  m = s.match(/^([A-Za-z]{3,9})[ -\/](\d{4})$/);
+  if (m) {
+    const moIdx = monthNameToIndex(m[1]);
+    const y = Number(m[2]);
+    if (moIdx !== null) return Date.UTC(y, moIdx, 1);
+  }
+
+  // 4) DD Mon YYYY
+  m = s.match(/^(\d{1,2})[ -\/]([A-Za-z]{3,9})[ -\/](\d{4})$/);
+  if (m) {
+    const d = Number(m[1]);
+    const moIdx = monthNameToIndex(m[2]);
+    const y = Number(m[3]);
+    if (moIdx !== null) return Date.UTC(y, moIdx, d);
+  }
+
+  // 5) YYYY Mon
+  m = s.match(/^(\d{4})[ -\/]([A-Za-z]{3,9})$/);
+  if (m) {
+    const y = Number(m[1]);
+    const moIdx = monthNameToIndex(m[2]);
+    if (moIdx !== null) return Date.UTC(y, moIdx, 1);
+  }
+
+  // 6) Fallback to Date.parse
+  const t = Date.parse(s);
+  return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;
+}
+
+function sortByMonthAsc<T extends { month: string }>(arr: T[]): T[] {
+  // Stable-ish: map with index to break ties
+  return [...arr]
+    .map((item, idx) => ({ item, idx, ts: monthToTimestamp(item.month) }))
+    .sort((a, b) => (a.ts === b.ts ? a.idx - b.idx : a.ts - b.ts))
+    .map((x) => x.item);
+}
+
 /* ---------- Shared UI helpers ---------- */
 
 function ChartCard({
@@ -112,15 +192,25 @@ export default function TrendsClient({ name }: Props) {
 
   useEffect(() => {
     load();
-    // Cleanup: invalidate any in-flight request when name changes/unmounts
     return () => {
+      // invalidate any in-flight request when name changes/unmounts
       reqIdRef.current++;
     };
   }, [load]);
 
-  const traffic = data?.traffic ?? [];
-  const availability = data?.availability ?? [];
-  const complaints = data?.complaints ?? [];
+  // Sort everything by month to ensure consistent chronological order
+  const traffic = useMemo(
+    () => sortByMonthAsc(data?.traffic ?? []),
+    [data?.traffic]
+  );
+  const availability = useMemo(
+    () => sortByMonthAsc(data?.availability ?? []),
+    [data?.availability]
+  );
+  const complaints = useMemo(
+    () => sortByMonthAsc(data?.complaints ?? []),
+    [data?.complaints]
+  );
 
   // Build single-series datasets for each metric
   const sVoice2G = useMemo(
@@ -303,10 +393,12 @@ function SingleLineChart({
     </ResponsiveContainer>
   );
 }
+
 type TrendPoint = {
   month: string;
   [key: string]: string | number | null;
 };
+
 function SimpleMetricLine<T extends TrendPoint>({
   data,
   xKey,
@@ -316,8 +408,8 @@ function SimpleMetricLine<T extends TrendPoint>({
   integerTicks = false,
 }: {
   data: T[];
-  xKey: string;
-  yKey: string;
+  xKey: keyof T;
+  yKey: keyof T;
   seriesName: string;
   yDomain?: [number, number];
   integerTicks?: boolean;
@@ -343,7 +435,7 @@ function SimpleMetricLine<T extends TrendPoint>({
 
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis
-          dataKey={xKey}
+          dataKey={xKey as string}
           tick={{ fontSize: 11, fill: "#6b7280" }}
           tickMargin={6}
         />
@@ -367,7 +459,7 @@ function SimpleMetricLine<T extends TrendPoint>({
 
         <Line
           type="monotone"
-          dataKey={yKey}
+          dataKey={yKey as string}
           name={seriesName}
           stroke={`url(#${lineId})`}
           strokeWidth={2.6}
