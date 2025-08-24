@@ -303,8 +303,11 @@ function SingleLineChart({
     </ResponsiveContainer>
   );
 }
-
-function SimpleMetricLine({
+type TrendPoint = {
+  month: string;
+  [key: string]: string | number | null;
+};
+function SimpleMetricLine<T extends TrendPoint>({
   data,
   xKey,
   yKey,
@@ -312,7 +315,7 @@ function SimpleMetricLine({
   yDomain,
   integerTicks = false,
 }: {
-  data: any[];
+  data: T[];
   xKey: string;
   yKey: string;
   seriesName: string;
