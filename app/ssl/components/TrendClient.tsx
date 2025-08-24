@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useId,
+} from "react";
+
 import { getAllTrends } from "@/app/actions/sitetrends";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +25,50 @@ import {
 import { SiteTrendsBundle } from "@/interfaces";
 
 type Props = { name: string };
+
+/* ---------- Shared UI helpers ---------- */
+
+function ChartCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="h-72 border-0 shadow-sm bg-gradient-to-b from-white to-slate-50">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-slate-800">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="h-full">
+        <div className="h-56">{children}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function getSeriesColors(seriesName: string) {
+  switch (seriesName) {
+    case "Voice 2G":
+      return { start: "#06b6d4", end: "#0ea5e9" }; // cyan → blue
+    case "Voice 3G":
+      return { start: "#22c55e", end: "#16a34a" }; // green
+    case "VoLTE":
+      return { start: "#f59e0b", end: "#ef4444" }; // amber → red
+    case "Data 3G (GB)":
+      return { start: "#a78bfa", end: "#8b5cf6" }; // violet
+    case "Data 4G (GB)":
+      return { start: "#ec4899", end: "#db2777" }; // pink
+    case "Availability (%)":
+      return { start: "#10b981", end: "#059669" }; // emerald
+    case "Complaints":
+      return { start: "#f97316", end: "#ef4444" }; // orange → red
+    default:
+      return { start: "#3b82f6", end: "#9333ea" }; // blue → purple
+  }
+}
+
+/* ---------- Main component ---------- */
 
 export default function TrendsClient({ name }: Props) {
   const [data, setData] = useState<SiteTrendsBundle | null>(null);
@@ -43,7 +95,6 @@ export default function TrendsClient({ name }: Props) {
 
     try {
       const bundle = await getAllTrends(name);
-      // Only update if this is the latest request
       if (reqIdRef.current === myReqId) {
         setData(bundle ?? null);
       }
@@ -148,40 +199,24 @@ export default function TrendsClient({ name }: Props) {
 
           {/* 6) Availability */}
           <ChartCard title="Availability (%)">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={availability}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="availability"
-                  name="Availability (%)"
-                  dot
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <SimpleMetricLine
+              data={availability}
+              xKey="month"
+              yKey="availability"
+              seriesName="Availability (%)"
+              yDomain={[0, 100]}
+            />
           </ChartCard>
 
           {/* 7) Complaints */}
           <ChartCard title="Complaints (Monthly)">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={complaints}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="complaints_count"
-                  name="Complaints"
-                  dot
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <SimpleMetricLine
+              data={complaints}
+              xKey="month"
+              yKey="complaints_count"
+              seriesName="Complaints"
+              integerTicks
+            />
           </ChartCard>
         </div>
       )}
@@ -205,26 +240,7 @@ export default function TrendsClient({ name }: Props) {
   );
 }
 
-/* ---------- Small helpers/components ---------- */
-
-function ChartCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card className="h-72">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="h-full">
-        <div className="h-56">{children}</div>
-      </CardContent>
-    </Card>
-  );
-}
+/* ---------- Stylish charts (shared) ---------- */
 
 function SingleLineChart({
   data,
@@ -233,15 +249,130 @@ function SingleLineChart({
   data: { month: string; value: number | null }[];
   seriesName: string;
 }) {
+  const id = useId(); // unique gradient ids per instance
+  const { start, end } = getSeriesColors(seriesName);
+  const lineId = `line-${id}`;
+  const areaId = `area-${id}`;
+
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="value" name={seriesName} dot={false} />
+      <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+        <defs>
+          <linearGradient id={lineId} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={start} />
+            <stop offset="100%" stopColor={end} />
+          </linearGradient>
+          <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={start} stopOpacity={0.22} />
+            <stop offset="100%" stopColor={end} stopOpacity={0.05} />
+          </linearGradient>
+        </defs>
+
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <XAxis
+          dataKey="month"
+          tick={{ fontSize: 11, fill: "#6b7280" }}
+          tickMargin={6}
+        />
+        <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
+        <Tooltip
+          cursor={{ strokeDasharray: "3 3" }}
+          contentStyle={{
+            backgroundColor: "rgba(255,255,255,0.95)",
+            border: "1px solid #e5e7eb",
+            borderRadius: 10,
+            boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+          }}
+          labelStyle={{ color: "#111827" }}
+          itemStyle={{ color: "#374151" }}
+        />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+
+        <Line
+          type="monotone"
+          dataKey="value"
+          name={seriesName}
+          stroke={`url(#${lineId})`}
+          strokeWidth={2.6}
+          dot={{ r: 2.5, stroke: "#fff", strokeWidth: 1 }}
+          activeDot={{ r: 5, stroke: end, strokeWidth: 2 }}
+          fill={`url(#${areaId})`}
+          strokeOpacity={0.95}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+function SimpleMetricLine({
+  data,
+  xKey,
+  yKey,
+  seriesName,
+  yDomain,
+  integerTicks = false,
+}: {
+  data: any[];
+  xKey: string;
+  yKey: string;
+  seriesName: string;
+  yDomain?: [number, number];
+  integerTicks?: boolean;
+}) {
+  const id = useId();
+  const { start, end } = getSeriesColors(seriesName);
+  const lineId = `line-${id}`;
+  const areaId = `area-${id}`;
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+        <defs>
+          <linearGradient id={lineId} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={start} />
+            <stop offset="100%" stopColor={end} />
+          </linearGradient>
+          <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={start} stopOpacity={0.22} />
+            <stop offset="100%" stopColor={end} stopOpacity={0.05} />
+          </linearGradient>
+        </defs>
+
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <XAxis
+          dataKey={xKey}
+          tick={{ fontSize: 11, fill: "#6b7280" }}
+          tickMargin={6}
+        />
+        <YAxis
+          domain={yDomain}
+          allowDecimals={!integerTicks}
+          tick={{ fontSize: 11, fill: "#6b7280" }}
+        />
+        <Tooltip
+          cursor={{ strokeDasharray: "3 3" }}
+          contentStyle={{
+            backgroundColor: "rgba(255,255,255,0.95)",
+            border: "1px solid #e5e7eb",
+            borderRadius: 10,
+            boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+          }}
+          labelStyle={{ color: "#111827" }}
+          itemStyle={{ color: "#374151" }}
+        />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+
+        <Line
+          type="monotone"
+          dataKey={yKey}
+          name={seriesName}
+          stroke={`url(#${lineId})`}
+          strokeWidth={2.6}
+          dot={{ r: 2.5, stroke: "#fff", strokeWidth: 1 }}
+          activeDot={{ r: 5, stroke: end, strokeWidth: 2 }}
+          fill={`url(#${areaId})`}
+          strokeOpacity={0.95}
+        />
       </LineChart>
     </ResponsiveContainer>
   );
