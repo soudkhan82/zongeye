@@ -5,9 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import Map, { Marker, Popup, MapRef } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import CsvDownloadButton, {
-  type CsvColumn,
-} from "@/app/components/csvdownload";
+import CsvDownloadButton from "@/app/components/csvdownload";
 import {
   getComplaintsDashboard,
   type ComplaintsDashboardPayload,
