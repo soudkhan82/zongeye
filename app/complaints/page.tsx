@@ -1,6 +1,6 @@
 // app/complaints/page.tsx
 "use client";
-
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import Map, { Marker, Popup, MapRef } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
@@ -55,7 +55,7 @@ import {
 
 export default function ComplaintsPage() {
   const mapRef = useRef<MapRef | null>(null);
-
+  const router = useRouter();
   // types for chart data
   type GridCount = { grid: string; count: number };
 
@@ -79,6 +79,9 @@ export default function ComplaintsPage() {
   // Trend dialog state
   const [trendOpen, setTrendOpen] = useState<boolean>(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
+  const [selectedRouteName, setSelectedRouteName] = useState<string | null>(
+    null
+  );
   const [trend, setTrend] = useState<SiteTrend | null>(null);
   const [trendLoading, setTrendLoading] = useState<boolean>(false);
   const [trendErr, setTrendErr] = useState<string | null>(null);
@@ -91,6 +94,14 @@ export default function ComplaintsPage() {
     } catch {
       return "Failed to load data";
     }
+  }
+  function getRowRouteName(r: SiteRow): string | null {
+    const rec = r as unknown as Record<string, unknown>;
+    const candidate =
+      (typeof rec["name"] === "string" ? (rec["name"] as string) : undefined) ??
+      r.siteId ??
+      null;
+    return candidate && String(candidate).trim() ? String(candidate) : null;
   }
 
   // Load subregions
