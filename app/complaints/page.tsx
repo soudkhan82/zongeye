@@ -187,8 +187,7 @@ export default function ComplaintsPage() {
     const agg = new globalThis.Map<string, number>();
     for (const r of filteredRows) {
       const name = (r.district ?? "—").trim() || "—";
-      const cnt =
-        typeof r.count === "number" ? r.count : Number((r as any).count ?? 0);
+      const cnt = typeof r.count === "number" ? r.count : Number(r.count ?? 0);
       agg.set(name, (agg.get(name) ?? 0) + (Number.isFinite(cnt) ? cnt : 0));
     }
     const entries: [string, number][] = Array.from(agg.entries());
