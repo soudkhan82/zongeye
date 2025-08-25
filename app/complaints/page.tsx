@@ -161,6 +161,34 @@ export default function ComplaintsPage() {
     return filteredRows.reduce((sum, r) => sum + (r.count ?? 0), 0);
   }, [filteredRows]);
 
+  // === NEW: Filter points to match the table/search ===
+  const filteredSiteIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const r of filteredRows) {
+      if (r.siteId) ids.add(r.siteId);
+    }
+    return ids;
+  }, [filteredRows]);
+
+  const filteredPoints: Point[] = useMemo(() => {
+    const pts = payload?.points ?? [];
+    if (filteredSiteIds.size === 0) return [];
+    return pts.filter(
+      (p: Point) => !!p.siteId && filteredSiteIds.has(p.siteId)
+    );
+  }, [payload, filteredSiteIds]);
+
+  // If a selected marker falls out of the filtered set, clear it
+  useEffect(() => {
+    if (
+      selected &&
+      (!selected.siteId || !filteredSiteIds.has(selected.siteId))
+    ) {
+      setSelected(null);
+    }
+  }, [filteredSiteIds, selected]);
+  // === /NEW ===
+
   // type ServiceTitleCount = { name: string; value: number };
 
   const serviceTitleCounts = useMemo(() => {
@@ -177,9 +205,9 @@ export default function ComplaintsPage() {
 
   // Marker sizing
   const [minCount, maxCount] = useMemo((): [number, number] => {
-    const counts = (payload?.points ?? []).map((p: Point) => p.count ?? 0);
+    const counts = filteredPoints.map((p: Point) => p.count ?? 0); // use filtered
     return counts.length ? [Math.min(...counts), Math.max(...counts)] : [0, 0];
-  }, [payload]);
+  }, [filteredPoints]);
 
   const sizeFor = (count: number): number => {
     const minSize = 6,
@@ -244,7 +272,9 @@ export default function ComplaintsPage() {
 
   const flyToSite = (siteId: string): void => {
     if (!mapRef.current || !payload?.points?.length) return;
-    const p = payload.points.find((x: Point) => x.siteId === siteId);
+    const p =
+      filteredPoints.find((x: Point) => x.siteId === siteId) ??
+      payload.points.find((x: Point) => x.siteId === siteId);
     if (!p || typeof p.lng !== "number" || typeof p.lat !== "number") return;
     mapRef.current.flyTo({ center: [p.lng, p.lat], zoom: 11, duration: 900 });
     setSelected(p);
@@ -349,8 +379,11 @@ export default function ComplaintsPage() {
             {(payload?.total ?? 0).toLocaleString()}
           </span>
           <span className="ml-3 text-xs text-muted-foreground">
-            rows: {payload?.rows?.length ?? 0} • points:{" "}
-            {payload?.points?.length ?? 0}
+            rows: {filteredRows.length} of {payload?.rows?.length ?? 0} •
+            points: {filteredPoints.length}
+            {typeof payload?.points?.length === "number" && search.trim()
+              ? ` of ${payload.points.length}`
+              : ""}
           </span>
         </div>
       </div>
@@ -393,7 +426,7 @@ export default function ComplaintsPage() {
                 mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                 onLoad={fitToAll}
               >
-                {(payload?.points ?? []).map((p: Point) => {
+                {(filteredPoints ?? []).map((p: Point) => {
                   if (typeof p.lng !== "number" || typeof p.lat !== "number")
                     return null;
                   const size = sizeFor(p.count ?? 0);
