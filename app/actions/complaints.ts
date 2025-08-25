@@ -8,6 +8,7 @@ export type SiteRow = {
   grid: string | null;
   district: string | null;
   classification: string | null;
+  servicetitle: string | null;
   address: string | null; // ✅ new
   count: number;
 };

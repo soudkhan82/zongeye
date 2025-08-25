@@ -58,12 +58,6 @@ export default function ComplaintsPage() {
 
   // types for chart data
   type GridCount = { grid: string; count: number };
-  type ServiceCount = {
-    name: string;
-    value: number;
-    siteId?: string;
-    site_id?: string;
-  };
 
   // Default subregion
   const [subregion, setSubregion] = useState<string>("North-1");
@@ -157,6 +151,10 @@ export default function ComplaintsPage() {
     });
   }, [payload, search]);
 
+  const filteredTotalComplaints = useMemo<number>(() => {
+    return filteredRows.reduce((sum, r) => sum + (r.count ?? 0), 0);
+  }, [filteredRows]);
+
   // Marker sizing
   const [minCount, maxCount] = useMemo((): [number, number] => {
     const counts = (payload?.points ?? []).map((p: Point) => p.count ?? 0);
@@ -184,35 +182,20 @@ export default function ComplaintsPage() {
     }));
   }, [payload]);
 
-  // Safe extractors (avoid any)
-  const toStringOpt = (u: unknown): string | undefined =>
-    u === null || u === undefined ? undefined : String(u);
-  const toNumber = (u: unknown, fallback = 0): number =>
-    typeof u === "number" ? u : Number(u ?? fallback);
-
-  const serviceCountsRaw = useMemo<ServiceCount[]>(() => {
-    const arr = (payload?.servicecounts ?? []) as Array<
-      Record<string, unknown>
-    >;
-    return arr.map((s) => {
-      const name = typeof s["name"] === "string" ? s["name"] : "—";
-      const value = toNumber(s["value"], 0);
-      const siteId = toStringOpt(s["siteId"]);
-      const site_id = toStringOpt(s["site_id"]);
-      return {
-        name,
-        value,
-        ...(siteId ? { siteId } : {}),
-        ...(site_id ? { site_id } : {}),
-      };
-    });
-  }, [payload]);
-
-  // set of siteIds present in filtered table (used for cross-filtering)
-  const filteredSiteIds = useMemo(
-    () => new Set(filteredRows.map((r) => r.siteId)),
-    [filteredRows]
-  );
+  // District counts (updates with filteredRows)
+  const districtCounts = useMemo(() => {
+    const agg = new globalThis.Map<string, number>();
+    for (const r of filteredRows) {
+      const name = (r.district ?? "—").trim() || "—";
+      const cnt =
+        typeof r.count === "number" ? r.count : Number((r as any).count ?? 0);
+      agg.set(name, (agg.get(name) ?? 0) + (Number.isFinite(cnt) ? cnt : 0));
+    }
+    const entries: [string, number][] = Array.from(agg.entries());
+    return entries
+      .map(([district, value]) => ({ district, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredRows]);
 
   // Grid chart: recompute from filtered rows when searching; else use payload
   const gridChartData = useMemo<GridCount[]>(() => {
@@ -226,27 +209,6 @@ export default function ComplaintsPage() {
       .map(([grid, count]) => ({ grid, count }))
       .sort((a, b) => b.count - a.count);
   }, [filteredRows, gridCountsRaw, search]);
-
-  // Service chart: try to filter by siteId if service items carry it; else fallback
-  const serviceCountsFiltered = useMemo<ServiceCount[]>(() => {
-    const hasIds = serviceCountsRaw.some(
-      (x) => typeof x.siteId === "string" || typeof x.site_id === "string"
-    );
-    if (!search.trim() || !hasIds) return serviceCountsRaw;
-
-    return serviceCountsRaw.filter((s) => {
-      const sid = s.siteId ?? s.site_id;
-      return sid ? filteredSiteIds.has(String(sid)) : false;
-    });
-  }, [serviceCountsRaw, filteredSiteIds, search]);
-
-  const serviceTop8 = useMemo(
-    () =>
-      [...serviceCountsFiltered]
-        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
-        .slice(0, 8),
-    [serviceCountsFiltered]
-  );
   // ======== /Charts data ========
 
   // Map helpers
@@ -291,7 +253,7 @@ export default function ComplaintsPage() {
     })();
   }, [trendOpen, selectedName]);
 
-  // Prepare top services (badges)
+  // Prepare top services (badges) — still shown inside Trend dialog
   const topServices = useMemo(
     (): { name: string; value: number }[] =>
       trend?.serviceCounts
@@ -304,6 +266,12 @@ export default function ComplaintsPage() {
     <div className="w-full p-4 space-y-4">
       <h1 className="text-2xl font-bold text-center my-6">
         Complaints — Sites, Map & Charts
+        <div className="text-sm text-muted-foreground">
+          <b> Total (Complaints): </b>
+          <span className="font-semibold">
+            {filteredTotalComplaints.toLocaleString()}
+          </span>
+        </div>
       </h1>
 
       {/* Controls */}
@@ -540,7 +508,7 @@ export default function ComplaintsPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className=" w-full grid gap-4 md:grid-cols-1 xl:grid-cols-2">
         <Card className="h-[420px]">
           <CardHeader>
             <CardTitle>Complaints by Grid</CardTitle>
@@ -558,26 +526,55 @@ export default function ComplaintsPage() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+        {/* Removed: Service Title bar chart */}
+        {/* Charts */}
+        <div className="w-full grid gap-4 md:grid-cols-1 xl:grid-cols-2">
+          {/* Left: Grid Bar Chart (unchanged) */}
 
-        <Card className="h-[420px]">
-          <CardHeader>
-            <CardTitle>Top 8 by Service Title</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[340px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={serviceTop8}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <RTooltip />
-                <Legend />
-                <Bar dataKey="value" name="Complaints" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          {/* Right: District → Complaint Count table */}
+          <Card className="h-[420px]">
+            <CardHeader>
+              <CardTitle>Complaints by District</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[340px] overflow-auto p-0">
+              <div className="rounded-xl border border-muted/40 shadow-sm overflow-hidden">
+                <Table className="w-full text-[13px] leading-tight">
+                  <TableHeader className="sticky top-0 z-10 bg-gradient-to-r from-sky-500 to-indigo-600">
+                    <TableRow className="border-0">
+                      <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3">
+                        District
+                      </TableHead>
+                      <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3 text-right">
+                        Complaints
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="[&>tr]:border-0">
+                    {districtCounts.map((d) => (
+                      <TableRow key={d.district} className="even:bg-muted/30">
+                        <TableCell className="px-3">{d.district}</TableCell>
+                        <TableCell className="text-right px-3 font-semibold tabular-nums">
+                          {d.value}
+                        </TableCell>
+                      </TableRow>
+                    ))}
 
-        {/* (Optional third chart can go here) */}
+                    {districtCounts.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={2}
+                          className="text-center py-6 text-muted-foreground"
+                        >
+                          No data
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Trend Dialog */}
