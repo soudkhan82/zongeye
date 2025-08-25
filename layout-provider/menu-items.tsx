@@ -63,12 +63,10 @@ function MenuItems({
 
   const baseItems: NavItem[] = [
     { title: "Home", route: "/home", icon: Network },
-    { title: "Interactive Metrics", route: "/rt/kpi", icon: Network },
-    { title: "Geographical Information Sys", route: "/ssl", icon: MapIcon },
-    { title: "Traffic Analysis", route: "/traffic", icon: MapIcon },
-    { title: "Live Network Dashboard", route: "/ssl/Dashboard", icon: MapIcon },
+    { title: "Performance Metrices", route: "/rt/kpi", icon: Network },
+    { title: "On Air Network", route: "/ssl", icon: MapIcon },
+    { title: "Complaint Analytics", route: "/ssl", icon: MapIcon },
     { title: "Network Availability", route: "/avail", icon: Newspaper },
-    { title: "Corporate", route: "/corporate/dashboard", icon: Newspaper },
     { title: "Action Items", route: "/tasks", icon: SquareCheckBig },
     { title: "Network Achievements", route: "/blog", icon: Newspaper },
     { title: "Site Access Requests", route: "/vendor/SAR", icon: FileDown },
