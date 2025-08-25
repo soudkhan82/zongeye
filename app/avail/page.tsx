@@ -32,6 +32,7 @@ import {
 
 import { getAvailabilityPoints } from "@/app/actions/avail";
 import { getSubregions } from "@/app/actions/filters";
+import CsvDownloadButton from "../components/csvdownload";
 
 // ---------------- Types ----------------
 type SiteClass = "Platinum" | "Gold" | "Strategic" | "Silver" | "Bronze";
@@ -518,6 +519,31 @@ export default function AvailabilityPage() {
               <span className="text-sm text-muted-foreground">Loading…</span>
             )}
           </div>
+          <CsvDownloadButton
+            data={filtered}
+            filename={`availability_${selectedSubregion || "all"}_${
+              availRange[0]
+            }-${availRange[1]}_${new Date().toISOString().slice(0, 10)}.csv`}
+            title="Download the table rows as CSV"
+            // Keep the CSV numeric but nicely formatted for availability:
+            columns={[
+              { header: "Name", accessor: "name" as const },
+              {
+                header: "Availability %",
+                accessor: (r) => r.avg_availability,
+                format: (v) => Number(v).toFixed(2),
+              },
+              { header: "Class", accessor: "siteclassification" as const },
+              { header: "SubRegion", accessor: "subregion" as const },
+              { header: "Grid", accessor: "grid" as const },
+              { header: "Address", accessor: "address" as const },
+              { header: "Latitude", accessor: "latitude" as const },
+              { header: "Longitude", accessor: "longitude" as const },
+            ]}
+            disabled={loading || filtered.length === 0}
+          >
+            Download CSV
+          </CsvDownloadButton>
 
           {/* Quick search */}
           <div className="mb-2">
