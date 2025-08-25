@@ -65,7 +65,7 @@ function MenuItems({
     { title: "Home", route: "/home", icon: Network },
     { title: "Performance Metrices", route: "/rt/kpi", icon: Network },
     { title: "On Air Network", route: "/ssl", icon: MapIcon },
-    { title: "Complaint Analytics", route: "/ssl", icon: MapIcon },
+    { title: "Complaint Analytics", route: "/complaints", icon: MapIcon },
     { title: "Network Availability", route: "/avail", icon: Newspaper },
     { title: "Action Items", route: "/tasks", icon: SquareCheckBig },
     { title: "Network Achievements", route: "/blog", icon: Newspaper },
