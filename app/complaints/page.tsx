@@ -56,6 +56,11 @@ import {
 export default function ComplaintsPage() {
   const mapRef = useRef<MapRef | null>(null);
 
+  // types for chart data
+  type GridCount = { grid: string; count: number };
+  type ServiceCount = { name: string; value: number } & Record<string, unknown>;
+  // type DistrictCount = { district: string; count: number };
+
   // Default subregion
   const [subregion, setSubregion] = useState<string>("North-1");
   const [subregions, setSubregions] = useState<string[]>([]);
@@ -163,11 +168,89 @@ export default function ComplaintsPage() {
     return Math.round(minSize + t * (maxSize - minSize));
   };
 
-  // Charts data
-  const gridCounts = payload?.gridcounts ?? [];
-  const serviceTop8 = payload?.servicecounts
-    ? [...payload.servicecounts].sort((a, b) => b.value - a.value).slice(0, 8)
-    : [];
+  // ======== Charts data (filtered) ========
+  const gridCountsRaw = useMemo<GridCount[]>(() => {
+    const arr = (payload?.gridcounts ?? []) as Array<{
+      grid?: string | null;
+      count?: number | string | null;
+    }>;
+    return arr.map((g) => ({
+      grid: g.grid ?? "—",
+      count: Number(g.count ?? 0),
+    }));
+  }, [payload]);
+  const serviceCountsRaw = useMemo<ServiceCount[]>(() => {
+    const arr = (payload?.servicecounts ?? []) as Array<
+      Record<string, unknown>
+    >;
+    return arr.map((s) => ({
+      name: String((s as any).name ?? "—"),
+      value: Number((s as any).value ?? 0),
+      // Keep optional linkage for cross-filtering if present
+      ...((s as any).siteId !== undefined
+        ? { siteId: String((s as any).siteId) }
+        : {}),
+      ...((s as any).site_id !== undefined
+        ? { site_id: String((s as any).site_id) }
+        : {}),
+    }));
+  }, [payload]);
+
+  // set of siteIds present in filtered table (used for cross-filtering)
+  const filteredSiteIds = useMemo(
+    () => new Set(filteredRows.map((r) => r.siteId)),
+    [filteredRows]
+  );
+
+  // Grid chart: recompute from filtered rows when searching; else use payload
+  const gridChartData = useMemo<GridCount[]>(() => {
+    if (!search.trim()) return gridCountsRaw;
+    const agg = new globalThis.Map<string, number>(); // avoid React Map collision
+    for (const r of filteredRows) {
+      const key = r.grid ?? "—";
+      agg.set(key, (agg.get(key) ?? 0) + (r.count ?? 0));
+    }
+    return Array.from(agg.entries())
+      .map(([grid, count]) => ({ grid, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredRows, gridCountsRaw, search]);
+
+  // ...existing grid/service chart memos...
+
+  // Complaints by District (always from filteredRows)
+  // const districtChartData = useMemo<DistrictCount[]>(() => {
+  //   const agg = new globalThis.Map<string, number>();
+  //   for (const r of filteredRows) {
+  //     const key = r.district ?? "—";
+  //     agg.set(key, (agg.get(key) ?? 0) + (r.count ?? 0));
+  //   }
+  //   return Array.from(agg.entries())
+  //     .map(([district, count]) => ({ district, count }))
+  //     .sort((a, b) => b.count - a.count);
+  // }, [filteredRows]);
+
+  // Service chart: try to filter by siteId if service items carry it; else fallback
+  const serviceCountsFiltered = useMemo<ServiceCount[]>(() => {
+    if (!search.trim()) return serviceCountsRaw;
+    const first: any = serviceCountsRaw[0];
+    const hasSiteId = first && ("siteId" in first || "site_id" in first);
+    if (!hasSiteId) return serviceCountsRaw;
+
+    return serviceCountsRaw.filter((s: any) => {
+      const sid = s.siteId ?? s.site_id;
+      return sid ? filteredSiteIds.has(String(sid)) : false;
+    });
+  }, [serviceCountsRaw, filteredSiteIds, search]);
+
+  const serviceTop8 = useMemo(
+    () =>
+      [...serviceCountsFiltered]
+        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+        .slice(0, 8),
+    [serviceCountsFiltered]
+  );
+
+  // ======== /Charts data ========
 
   // Map helpers
   const fitToAll = (): void => {
@@ -266,7 +349,6 @@ export default function ComplaintsPage() {
             .toISOString()
             .slice(0, 10)}.csv`}
           title="Download the table rows as CSV"
-          // Explicit column order + headers:
           columns={[
             { header: "Site ID", accessor: "siteId" as const },
             { header: "Grid", accessor: "grid" as const },
@@ -469,7 +551,7 @@ export default function ComplaintsPage() {
           </CardHeader>
           <CardContent className="h-[340px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={gridCounts}>
+              <BarChart data={gridChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="grid" />
                 <YAxis />
@@ -498,6 +580,7 @@ export default function ComplaintsPage() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+        {/* Charts */}
       </div>
 
       {/* Trend Dialog — Area chart + shadcn badges for top services */}
@@ -542,7 +625,7 @@ export default function ComplaintsPage() {
                     <XAxis dataKey="date" />
                     <YAxis
                       allowDecimals={false}
-                      tick={{ fontSize: 10 }} // ← smaller x-axis labels
+                      tick={{ fontSize: 10 }}
                       tickMargin={6}
                     />
                     <RTooltip />
