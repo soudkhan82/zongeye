@@ -59,6 +59,11 @@ export default function ComplaintsPage() {
   // types for chart data
   type GridCount = { grid: string; count: number };
 
+  type SiteRowWithService = SiteRow & {
+    serviceTitle?: string | null;
+    count?: number | null;
+  };
+
   // Default subregion
   const [subregion, setSubregion] = useState<string>("North-1");
   const [subregions, setSubregions] = useState<string[]>([]);
@@ -154,27 +159,17 @@ export default function ComplaintsPage() {
   const filteredTotalComplaints = useMemo<number>(() => {
     return filteredRows.reduce((sum, r) => sum + (r.count ?? 0), 0);
   }, [filteredRows]);
-  type ServiceCount = { name: string; value: number };
 
-  type ServiceTitleCount = { name: string; value: number };
+  // type ServiceTitleCount = { name: string; value: number };
 
-  const serviceTitleCounts = useMemo<ServiceTitleCount[]>(() => {
+  const serviceTitleCounts = useMemo(() => {
     const agg = new globalThis.Map<string, number>();
-    for (const r of filteredRows as Array<Record<string, unknown>>) {
-      const title =
-        (r["serviceTitle"] as string | undefined) ??
-        (r["service_title"] as string | undefined) ??
-        (r["SERVICETITLE"] as string | undefined) ??
-        "—";
-      const name = title.trim() || "—";
-      const cnt =
-        typeof (r as any).count === "number"
-          ? (r as any).count
-          : Number((r as any).count ?? 0);
-      agg.set(name, (agg.get(name) ?? 0) + (Number.isFinite(cnt) ? cnt : 0));
+    for (const r of filteredRows as SiteRowWithService[]) {
+      const title = (r.serviceTitle ?? "—").trim() || "—";
+      const cnt = Number(r.count ?? 0);
+      agg.set(title, (agg.get(title) ?? 0) + cnt);
     }
-    const entries: [string, number][] = Array.from(agg.entries());
-    return entries
+    return Array.from(agg.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [filteredRows]);
