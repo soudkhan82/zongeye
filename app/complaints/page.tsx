@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge"; // ✅ NEW
+import { Badge } from "@/components/ui/badge";
 
 import {
   ResponsiveContainer,
@@ -58,8 +58,12 @@ export default function ComplaintsPage() {
 
   // types for chart data
   type GridCount = { grid: string; count: number };
-  type ServiceCount = { name: string; value: number } & Record<string, unknown>;
-  // type DistrictCount = { district: string; count: number };
+  type ServiceCount = {
+    name: string;
+    value: number;
+    siteId?: string;
+    site_id?: string;
+  };
 
   // Default subregion
   const [subregion, setSubregion] = useState<string>("North-1");
@@ -75,7 +79,7 @@ export default function ComplaintsPage() {
 
   // Trend dialog state
   const [trendOpen, setTrendOpen] = useState<boolean>(false);
-  const [selectedName, setSelectedName] = useState<string | null>(null); // pass siteId as "name"
+  const [selectedName, setSelectedName] = useState<string | null>(null);
   const [trend, setTrend] = useState<SiteTrend | null>(null);
   const [trendLoading, setTrendLoading] = useState<boolean>(false);
   const [trendErr, setTrendErr] = useState<string | null>(null);
@@ -176,24 +180,32 @@ export default function ComplaintsPage() {
     }>;
     return arr.map((g) => ({
       grid: g.grid ?? "—",
-      count: Number(g.count ?? 0),
+      count: typeof g.count === "number" ? g.count : Number(g.count ?? 0),
     }));
   }, [payload]);
+
+  // Safe extractors (avoid any)
+  const toStringOpt = (u: unknown): string | undefined =>
+    u === null || u === undefined ? undefined : String(u);
+  const toNumber = (u: unknown, fallback = 0): number =>
+    typeof u === "number" ? u : Number(u ?? fallback);
+
   const serviceCountsRaw = useMemo<ServiceCount[]>(() => {
     const arr = (payload?.servicecounts ?? []) as Array<
       Record<string, unknown>
     >;
-    return arr.map((s) => ({
-      name: String((s as any).name ?? "—"),
-      value: Number((s as any).value ?? 0),
-      // Keep optional linkage for cross-filtering if present
-      ...((s as any).siteId !== undefined
-        ? { siteId: String((s as any).siteId) }
-        : {}),
-      ...((s as any).site_id !== undefined
-        ? { site_id: String((s as any).site_id) }
-        : {}),
-    }));
+    return arr.map((s) => {
+      const name = typeof s["name"] === "string" ? s["name"] : "—";
+      const value = toNumber(s["value"], 0);
+      const siteId = toStringOpt(s["siteId"]);
+      const site_id = toStringOpt(s["site_id"]);
+      return {
+        name,
+        value,
+        ...(siteId ? { siteId } : {}),
+        ...(site_id ? { site_id } : {}),
+      };
+    });
   }, [payload]);
 
   // set of siteIds present in filtered table (used for cross-filtering)
@@ -205,7 +217,7 @@ export default function ComplaintsPage() {
   // Grid chart: recompute from filtered rows when searching; else use payload
   const gridChartData = useMemo<GridCount[]>(() => {
     if (!search.trim()) return gridCountsRaw;
-    const agg = new globalThis.Map<string, number>(); // avoid React Map collision
+    const agg = new globalThis.Map<string, number>();
     for (const r of filteredRows) {
       const key = r.grid ?? "—";
       agg.set(key, (agg.get(key) ?? 0) + (r.count ?? 0));
@@ -215,28 +227,14 @@ export default function ComplaintsPage() {
       .sort((a, b) => b.count - a.count);
   }, [filteredRows, gridCountsRaw, search]);
 
-  // ...existing grid/service chart memos...
-
-  // Complaints by District (always from filteredRows)
-  // const districtChartData = useMemo<DistrictCount[]>(() => {
-  //   const agg = new globalThis.Map<string, number>();
-  //   for (const r of filteredRows) {
-  //     const key = r.district ?? "—";
-  //     agg.set(key, (agg.get(key) ?? 0) + (r.count ?? 0));
-  //   }
-  //   return Array.from(agg.entries())
-  //     .map(([district, count]) => ({ district, count }))
-  //     .sort((a, b) => b.count - a.count);
-  // }, [filteredRows]);
-
   // Service chart: try to filter by siteId if service items carry it; else fallback
   const serviceCountsFiltered = useMemo<ServiceCount[]>(() => {
-    if (!search.trim()) return serviceCountsRaw;
-    const first: any = serviceCountsRaw[0];
-    const hasSiteId = first && ("siteId" in first || "site_id" in first);
-    if (!hasSiteId) return serviceCountsRaw;
+    const hasIds = serviceCountsRaw.some(
+      (x) => typeof x.siteId === "string" || typeof x.site_id === "string"
+    );
+    if (!search.trim() || !hasIds) return serviceCountsRaw;
 
-    return serviceCountsRaw.filter((s: any) => {
+    return serviceCountsRaw.filter((s) => {
       const sid = s.siteId ?? s.site_id;
       return sid ? filteredSiteIds.has(String(sid)) : false;
     });
@@ -249,7 +247,6 @@ export default function ComplaintsPage() {
         .slice(0, 8),
     [serviceCountsFiltered]
   );
-
   // ======== /Charts data ========
 
   // Map helpers
@@ -473,7 +470,6 @@ export default function ComplaintsPage() {
           <CardContent className="h-[500px] overflow-auto p-0">
             <div className="rounded-xl border border-muted/40 shadow-sm overflow-hidden">
               <Table className="w-full text-[13.5px] md:text-[14px] leading-tight">
-                {/* Sticky header */}
                 <TableHeader className="sticky top-0 z-10 bg-gradient-to-r from-indigo-600 via-sky-500 to-emerald-500">
                   <TableRow className="border-0">
                     <TableHead className="text-white font-semibold uppercase tracking-wide first:pl-5 py-3">
@@ -544,7 +540,7 @@ export default function ComplaintsPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid xl:grid-cols-2 gap-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card className="h-[420px]">
           <CardHeader>
             <CardTitle>Complaints by Grid</CardTitle>
@@ -580,10 +576,11 @@ export default function ComplaintsPage() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        {/* Charts */}
+
+        {/* (Optional third chart can go here) */}
       </div>
 
-      {/* Trend Dialog — Area chart + shadcn badges for top services */}
+      {/* Trend Dialog */}
       <Dialog
         open={trendOpen}
         onOpenChange={(o: boolean) => {
@@ -613,7 +610,6 @@ export default function ComplaintsPage() {
                 • Range: {trend.from ?? "—"} → {trend.to ?? "—"}
               </div>
 
-              {/* Bar chart (replacing area chart) */}
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
@@ -635,14 +631,13 @@ export default function ComplaintsPage() {
                 </ResponsiveContainer>
               </div>
 
-              {/* ✅ Upgraded Top Services as shadcn badges */}
               {topServices.length > 0 && (
                 <div className="space-y-2">
                   <div className="text-xs font-medium text-muted-foreground">
                     Top services:
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {topServices.map((s: { name: string; value: number }) => (
+                    {topServices.map((s) => (
                       <Badge
                         key={s.name}
                         variant="secondary"
