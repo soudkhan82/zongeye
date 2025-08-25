@@ -154,6 +154,30 @@ export default function ComplaintsPage() {
   const filteredTotalComplaints = useMemo<number>(() => {
     return filteredRows.reduce((sum, r) => sum + (r.count ?? 0), 0);
   }, [filteredRows]);
+  type ServiceCount = { name: string; value: number };
+
+  type ServiceTitleCount = { name: string; value: number };
+
+  const serviceTitleCounts = useMemo<ServiceTitleCount[]>(() => {
+    const agg = new globalThis.Map<string, number>();
+    for (const r of filteredRows as Array<Record<string, unknown>>) {
+      const title =
+        (r["serviceTitle"] as string | undefined) ??
+        (r["service_title"] as string | undefined) ??
+        (r["SERVICETITLE"] as string | undefined) ??
+        "—";
+      const name = title.trim() || "—";
+      const cnt =
+        typeof (r as any).count === "number"
+          ? (r as any).count
+          : Number((r as any).count ?? 0);
+      agg.set(name, (agg.get(name) ?? 0) + (Number.isFinite(cnt) ? cnt : 0));
+    }
+    const entries: [string, number][] = Array.from(agg.entries());
+    return entries
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredRows]);
 
   // Marker sizing
   const [minCount, maxCount] = useMemo((): [number, number] => {
@@ -527,10 +551,52 @@ export default function ComplaintsPage() {
         </Card>
         {/* Removed: Service Title bar chart */}
         {/* Charts */}
-        <div className="w-full grid gap-4 md:grid-cols-1 xl:grid-cols-2">
-          {/* Left: Grid Bar Chart (unchanged) */}
+        {/* Tables row: Service Title + District (both reflect current filteredRows) */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Service Title table */}
+          <Card className="h-[420px]">
+            <CardHeader>
+              <CardTitle>Complaints by Service Title</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[340px] overflow-auto p-0">
+              <div className="rounded-xl border border-muted/40 shadow-sm overflow-hidden">
+                <Table className="w-full text-[13px] leading-tight">
+                  <TableHeader className="sticky top-0 z-10 bg-gradient-to-r from-sky-500 to-indigo-600">
+                    <TableRow className="border-0">
+                      <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3">
+                        Service Title
+                      </TableHead>
+                      <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3 text-right">
+                        Complaints
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="[&>tr]:border-0">
+                    {serviceTitleCounts.map((s) => (
+                      <TableRow key={s.name} className="even:bg-muted/30">
+                        <TableCell className="px-3">{s.name}</TableCell>
+                        <TableCell className="text-right px-3 font-semibold tabular-nums">
+                          {s.value}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {serviceTitleCounts.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={2}
+                          className="text-center py-6 text-muted-foreground"
+                        >
+                          No data
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Right: District → Complaint Count table */}
+          {/* District table */}
           <Card className="h-[420px]">
             <CardHeader>
               <CardTitle>Complaints by District</CardTitle>
@@ -557,7 +623,6 @@ export default function ComplaintsPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-
                     {districtCounts.length === 0 && (
                       <TableRow>
                         <TableCell
