@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import Map, { Marker, Popup, MapRef } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-
+import CsvDownloadButton, {
+  type CsvColumn,
+} from "@/app/components/csvdownload";
 import {
   getComplaintsDashboard,
   type ComplaintsDashboardPayload,
@@ -260,6 +262,22 @@ export default function ComplaintsPage() {
         <Button onClick={fetchData} disabled={loading}>
           {loading ? "Loading…" : "Refresh"}
         </Button>
+        <CsvDownloadButton
+          data={filteredRows}
+          filename={`complaints_sites_${subregion || "all"}_${new Date()
+            .toISOString()
+            .slice(0, 10)}.csv`}
+          title="Download the table rows as CSV"
+          // Explicit column order + headers:
+          columns={[
+            { header: "Site ID", accessor: "siteId" as const },
+            { header: "Grid", accessor: "grid" as const },
+            { header: "District", accessor: "district" as const },
+            { header: "Classification", accessor: "classification" as const },
+            { header: "Complaints", accessor: "count" as const },
+            { header: "Address", accessor: "address" as const },
+          ]}
+        />
 
         <div className="text-sm ml-auto">
           Total:{" "}
@@ -280,7 +298,22 @@ export default function ComplaintsPage() {
         {/* Map */}
         <Card className="h-[560px]">
           <CardHeader>
-            <CardTitle>Geomap (size ∝ complaints, grayscale basemap)</CardTitle>
+            <div className="text-sm text-muted-foreground">
+              Showing{" "}
+              <span className="font-semibold">
+                {filteredRows.length.toLocaleString()}
+              </span>
+              {typeof payload?.rows?.length === "number" && (
+                <>
+                  {" "}
+                  of{" "}
+                  <span className="font-semibold">
+                    {payload.rows.length.toLocaleString()}
+                  </span>
+                </>
+              )}
+              {search.trim() ? " (filtered)" : ""}
+            </div>
           </CardHeader>
           <CardContent className="h-[500px]">
             <div className="h-full rounded-lg overflow-hidden">
