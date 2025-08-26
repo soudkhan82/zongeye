@@ -430,6 +430,13 @@ export default function ComplaintsPage() {
                   if (typeof p.lng !== "number" || typeof p.lat !== "number")
                     return null;
                   const size = sizeFor(p.count ?? 0);
+
+                  const colorFor = (count: number = 0): string => {
+                    if (count <= 5) return "blue";
+                    if (count <= 10) return "yellow";
+                    if (count <= 20) return "orange";
+                    return "red";
+                  };
                   return (
                     <Marker
                       key={p.siteId}
@@ -447,7 +454,7 @@ export default function ComplaintsPage() {
                         style={{
                           width: size,
                           height: size,
-                          background: "#4b5563",
+                          background: colorFor(p.count ?? 0),
                           borderColor: "#ffffffcc",
                           boxShadow: "0 0 0 2px rgba(107,114,128,0.25)",
                         }}
