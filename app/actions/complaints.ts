@@ -79,3 +79,54 @@ export async function getSiteTrend(
   if (error) throw new Error(error.message);
   return data as SiteTrend;
 }
+export type ComplaintsTrendParams = {
+  fromDate?: string | null;
+  toDate?: string | null;
+  region?: string | null;
+  city?: string | null;
+  service?: string | null;
+  level?: string | null;
+  complaintLevel?: string | null;
+  siteIds?: string[] | null; // sync with search
+  granularity?: "day" | "week" | "month";
+};
+
+
+export async function getComplaintsTrend(params: ComplaintsTrendParams) {
+
+
+  const {
+    fromDate = null,
+    toDate = null,
+    region = null,
+    city = null,
+    service = null,
+    level = null,
+    complaintLevel = null,
+    siteIds = null,
+    granularity = "month",
+  } = params ?? {};
+
+  const { data, error } = await supabase.rpc("fetch_complaints_trend_v2", {
+    p_from_date: fromDate,
+    p_to_date: toDate,
+    p_region: region,
+    p_city: city,
+    p_service: service,
+    p_level: level,
+    p_complaint_level: complaintLevel,
+    p_site_ids: siteIds && siteIds.length ? siteIds : null,
+    p_granularity: granularity,
+  });
+
+  if (error) throw error;
+
+  // Normalize to strings for charts
+  const series: TrendPoint[] =
+    (data ?? []).map((r: { bucket: string; count: number }) => ({
+      bucket: r.bucket, // e.g. "2025-08-01"
+      count: Number(r.count ?? 0),
+    })) || [];
+
+  return series;
+}

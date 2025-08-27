@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getComplaintsTrend, type TrendPoint } from "@/app/actions/complaints";
 
 import {
   Select,
@@ -51,6 +52,8 @@ import {
   CartesianGrid,
   Tooltip as RTooltip,
   Legend,
+  LineChart,
+  Line,
 } from "recharts";
 
 export default function ComplaintsPage() {
@@ -69,6 +72,8 @@ export default function ComplaintsPage() {
   const [subregions, setSubregions] = useState<string[]>([]);
   const [search, setSearch] = useState<string>("");
 
+  // draft text in the input; only applied on button click
+  const [query, setQuery] = useState<string>("");
   const [payload, setPayload] = useState<ComplaintsDashboardPayload | null>(
     null
   );
@@ -80,6 +85,12 @@ export default function ComplaintsPage() {
   const [trendOpen, setTrendOpen] = useState<boolean>(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
 
+  //Complaint search trend
+  const [trendSeries, setTrendSeries] = useState<TrendPoint[]>([]);
+  const [trendSeriesLoading, setTrendSeriesLoading] = useState<boolean>(false);
+  const [trendSeriesErr, setTrendSeriesErr] = useState<string | null>(null);
+
+  //site trend
   const [trend, setTrend] = useState<SiteTrend | null>(null);
   const [trendLoading, setTrendLoading] = useState<boolean>(false);
   const [trendErr, setTrendErr] = useState<string | null>(null);
@@ -169,6 +180,37 @@ export default function ComplaintsPage() {
     }
     return ids;
   }, [filteredRows]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setTrendSeriesLoading(true);
+      setTrendSeriesErr(null);
+      try {
+        // Build a stable array from the Set (and cap length if needed)
+        const siteIdArray = Array.from(filteredSiteIds);
+        const series = await getComplaintsTrend({
+          fromDate: null,
+          toDate: null,
+          region: subregion || null, // keeps subregion filter
+          city: null,
+          service: null,
+          level: null,
+          complaintLevel: null,
+          siteIds: siteIdArray.length ? siteIdArray : null, // sync with search
+          granularity: "month", // 'day' | 'week' | 'month'
+        });
+        if (!cancelled) setTrendSeries(series);
+      } catch (e: any) {
+        if (!cancelled) setTrendSeriesErr(e?.message ?? "Failed to load trend");
+      } finally {
+        if (!cancelled) setTrendSeriesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [subregion, filteredSiteIds]);
 
   const filteredPoints: Point[] = useMemo(() => {
     const pts = payload?.points ?? [];
@@ -345,13 +387,24 @@ export default function ComplaintsPage() {
         </div>
 
         <div className="flex-1 min-w-[240px]">
-          <Input
-            placeholder="Search by Site ID, Grid, District, Classification…"
-            value={search}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setSearch(e.target.value)
-            }
-          />
+          <form
+            className="flex-1 min-w-[240px] flex items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setSearch(query.trim());
+            }}
+          >
+            <Input
+              placeholder="Search by Site ID, Grid, District, Classification…"
+              value={query}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setQuery(e.target.value)
+              }
+            />
+            <Button type="submit" variant="secondary">
+              Filter
+            </Button>
+          </form>
         </div>
 
         <Button onClick={fetchData} disabled={loading}>
@@ -567,7 +620,9 @@ export default function ComplaintsPage() {
       </div>
 
       {/* Charts */}
-      <div className=" w-full grid gap-4 md:grid-cols-1 xl:grid-cols-2">
+      {/* Charts */}
+      <div className="w-full grid gap-4 xl:grid-cols-2">
+        {/* Complaints by Grid (existing) */}
         <Card className="h-[420px]">
           <CardHeader>
             <CardTitle>Complaints by Grid</CardTitle>
@@ -585,96 +640,127 @@ export default function ComplaintsPage() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        {/* Removed: Service Title bar chart */}
-        {/* Charts */}
-        {/* Tables row: Service Title + District (both reflect current filteredRows) */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Service Title table */}
-          <Card className="h-[420px]">
-            <CardHeader>
-              <CardTitle>Complaints by Service Title</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[340px] overflow-auto p-0">
-              <div className="rounded-xl border border-muted/40 shadow-sm overflow-hidden">
-                <Table className="w-full text-[13px] leading-tight">
-                  <TableHeader className="sticky top-0 z-10 bg-gradient-to-r from-sky-500 to-indigo-600">
-                    <TableRow className="border-0">
-                      <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3">
-                        Service Title
-                      </TableHead>
-                      <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3 text-right">
-                        Complaints
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="[&>tr]:border-0">
-                    {serviceTitleCounts.map((s) => (
-                      <TableRow key={s.name} className="even:bg-muted/30">
-                        <TableCell className="px-3">{s.name}</TableCell>
-                        <TableCell className="text-right px-3 font-semibold tabular-nums">
-                          {s.value}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {serviceTitleCounts.length === 0 && (
-                      <TableRow>
-                        <TableCell
-                          colSpan={2}
-                          className="text-center py-6 text-muted-foreground"
-                        >
-                          No data
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* District table */}
-          <Card className="h-[420px]">
-            <CardHeader>
-              <CardTitle>Complaints by District</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[340px] overflow-auto p-0">
-              <div className="rounded-xl border border-muted/40 shadow-sm overflow-hidden">
-                <Table className="w-full text-[13px] leading-tight">
-                  <TableHeader className="sticky top-0 z-10 bg-gradient-to-r from-sky-500 to-indigo-600">
-                    <TableRow className="border-0">
-                      <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3">
-                        District
-                      </TableHead>
-                      <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3 text-right">
-                        Complaints
-                      </TableHead>
+        {/* NEW: Trend Line (synced with filters) */}
+        <Card className="h-[420px]">
+          <CardHeader>
+            <CardTitle>Complaints Trend</CardTitle>
+            <div className="text-xs text-muted-foreground">
+              {trendSeriesLoading
+                ? "Loading…"
+                : trendSeriesErr
+                ? `Error: ${trendSeriesErr}`
+                : ""}
+            </div>
+          </CardHeader>
+          <CardContent className="h-[340px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendSeries}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="bucket" />
+                <YAxis allowDecimals={false} />
+                <RTooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Complaints"
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+      {/* Tables row: Service Title + District (both reflect current filteredRows) */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Service Title table */}
+        <Card className="h-[420px]">
+          <CardHeader>
+            <CardTitle>Complaints by Service Title</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[340px] overflow-auto p-0">
+            <div className="rounded-xl border border-muted/40 shadow-sm overflow-hidden">
+              <Table className="w-full text-[13px] leading-tight">
+                <TableHeader className="sticky top-0 z-10 bg-gradient-to-r from-sky-500 to-indigo-600">
+                  <TableRow className="border-0">
+                    <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3">
+                      Service Title
+                    </TableHead>
+                    <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3 text-right">
+                      Complaints
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&>tr]:border-0">
+                  {serviceTitleCounts.map((s) => (
+                    <TableRow key={s.name} className="even:bg-muted/30">
+                      <TableCell className="px-3">{s.name}</TableCell>
+                      <TableCell className="text-right px-3 font-semibold tabular-nums">
+                        {s.value}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody className="[&>tr]:border-0">
-                    {districtCounts.map((d) => (
-                      <TableRow key={d.district} className="even:bg-muted/30">
-                        <TableCell className="px-3">{d.district}</TableCell>
-                        <TableCell className="text-right px-3 font-semibold tabular-nums">
-                          {d.value}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {districtCounts.length === 0 && (
-                      <TableRow>
-                        <TableCell
-                          colSpan={2}
-                          className="text-center py-6 text-muted-foreground"
-                        >
-                          No data
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  ))}
+                  {serviceTitleCounts.length === 0 && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={2}
+                        className="text-center py-6 text-muted-foreground"
+                      >
+                        No data
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* District table */}
+        <Card className="h-[420px]">
+          <CardHeader>
+            <CardTitle>Complaints by District</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[340px] overflow-auto p-0">
+            <div className="rounded-xl border border-muted/40 shadow-sm overflow-hidden">
+              <Table className="w-full text-[13px] leading-tight">
+                <TableHeader className="sticky top-0 z-10 bg-gradient-to-r from-sky-500 to-indigo-600">
+                  <TableRow className="border-0">
+                    <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3">
+                      District
+                    </TableHead>
+                    <TableHead className="text-white font-semibold uppercase tracking-wide py-2 px-3 text-right">
+                      Complaints
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&>tr]:border-0">
+                  {districtCounts.map((d) => (
+                    <TableRow key={d.district} className="even:bg-muted/30">
+                      <TableCell className="px-3">{d.district}</TableCell>
+                      <TableCell className="text-right px-3 font-semibold tabular-nums">
+                        {d.value}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {districtCounts.length === 0 && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={2}
+                        className="text-center py-6 text-muted-foreground"
+                      >
+                        No data
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Trend Dialog */}
