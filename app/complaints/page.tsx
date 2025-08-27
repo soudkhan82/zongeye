@@ -52,8 +52,8 @@ import {
   CartesianGrid,
   Tooltip as RTooltip,
   Legend,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
 } from "recharts";
 
 export default function ComplaintsPage() {
@@ -655,21 +655,39 @@ export default function ComplaintsPage() {
           </CardHeader>
           <CardContent className="h-[340px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendSeries}>
+              <AreaChart data={trendSeries}>
+                <defs>
+                  <linearGradient
+                    id="complaintsTrendFill"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor="#2563eb" stopOpacity={0.35} />
+                    <stop
+                      offset="100%"
+                      stopColor="#2563eb"
+                      stopOpacity={0.05}
+                    />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="bucket" />
                 <YAxis allowDecimals={false} />
                 <RTooltip />
                 <Legend />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="count"
                   name="Complaints"
+                  stroke="#2563eb"
+                  fill="url(#complaintsTrendFill)"
                   strokeWidth={2}
                   dot={false}
                   isAnimationActive={false}
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
