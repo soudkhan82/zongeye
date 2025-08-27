@@ -201,8 +201,8 @@ export default function ComplaintsPage() {
           granularity: "month", // 'day' | 'week' | 'month'
         });
         if (!cancelled) setTrendSeries(series);
-      } catch (e: any) {
-        if (!cancelled) setTrendSeriesErr(e?.message ?? "Failed to load trend");
+      } catch (e: unknown) {
+        if (!cancelled) setErr(getErrorMessage(e));
       } finally {
         if (!cancelled) setTrendSeriesLoading(false);
       }
