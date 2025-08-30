@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, MapRef, Popup } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useRouter } from "next/navigation";
+
 import { Button } from "@/components/ui/button";
 
 export type KpiKey =
@@ -65,7 +65,6 @@ export default function PointSizeMap({
   focusPoint,
 }: Props) {
   const mapRef = useRef<MapRef | null>(null);
-  const router = useRouter();
 
   const { min, max } = useMemo(() => {
     const nums: number[] = [];

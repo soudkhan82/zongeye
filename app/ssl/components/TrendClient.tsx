@@ -405,7 +405,7 @@ function SingleLineChart({
           tickFormatter={(v) => (v != null ? v.toLocaleString("en-US") : "")} // 👈 add commas
         />
         <Tooltip
-          formatter={(value: any) =>
+          formatter={(value) =>
             typeof value === "number" ? value.toLocaleString("en-US") : value
           } // 👈 tooltip also formatted
           cursor={{ strokeDasharray: "3 3" }}
