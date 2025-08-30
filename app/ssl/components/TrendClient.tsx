@@ -99,7 +99,6 @@ function monthToTimestamp(raw: string): number {
 }
 
 function sortByMonthAsc<T extends { month: string }>(arr: T[]): T[] {
-  // Stable-ish: map with index to break ties
   return [...arr]
     .map((item, idx) => ({ item, idx, ts: monthToTimestamp(item.month) }))
     .sort((a, b) => (a.ts === b.ts ? a.idx - b.idx : a.ts - b.ts))
@@ -130,21 +129,28 @@ function ChartCard({
 function getSeriesColors(seriesName: string) {
   switch (seriesName) {
     case "Voice 2G":
-      return { start: "#06b6d4", end: "#0ea5e9" }; // cyan → blue
+      return { start: "#06b6d4", end: "#0ea5e9" };
     case "Voice 3G":
-      return { start: "#22c55e", end: "#16a34a" }; // green
+      return { start: "#22c55e", end: "#16a34a" };
     case "VoLTE":
-      return { start: "#f59e0b", end: "#ef4444" }; // amber → red
+      return { start: "#f59e0b", end: "#ef4444" };
     case "Data 3G (GB)":
-      return { start: "#a78bfa", end: "#8b5cf6" }; // violet
+      return { start: "#a78bfa", end: "#8b5cf6" };
     case "Data 4G (GB)":
-      return { start: "#ec4899", end: "#db2777" }; // pink
+      return { start: "#ec4899", end: "#db2777" };
     case "Availability (%)":
-      return { start: "#10b981", end: "#059669" }; // emerald
+      return { start: "#10b981", end: "#059669" };
     case "Complaints":
-      return { start: "#f97316", end: "#ef4444" }; // orange → red
+      return { start: "#f97316", end: "#ef4444" };
+    // Revenue series colors
+    case "Total Revenue":
+      return { start: "#3b82f6", end: "#1d4ed8" };
+    case "Data Revenue":
+      return { start: "#8b5cf6", end: "#6d28d9" };
+    case "Voice Revenue":
+      return { start: "#ef4444", end: "#b91c1c" };
     default:
-      return { start: "#3b82f6", end: "#9333ea" }; // blue → purple
+      return { start: "#3b82f6", end: "#9333ea" };
   }
 }
 
@@ -155,7 +161,6 @@ export default function TrendsClient({ name }: Props) {
   const [loading, setLoading] = useState<boolean>(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // Tracks the latest in-flight request; older responses are ignored
   const reqIdRef = useRef(0);
 
   const getErrorMessage = (e: unknown): string => {
@@ -193,12 +198,11 @@ export default function TrendsClient({ name }: Props) {
   useEffect(() => {
     load();
     return () => {
-      // invalidate any in-flight request when name changes/unmounts
       reqIdRef.current++;
     };
   }, [load]);
 
-  // Sort everything by month to ensure consistent chronological order
+  // Sort everything by month
   const traffic = useMemo(
     () => sortByMonthAsc(data?.traffic ?? []),
     [data?.traffic]
@@ -212,7 +216,21 @@ export default function TrendsClient({ name }: Props) {
     [data?.complaints]
   );
 
-  // Build single-series datasets for each metric
+  // Revenue series (already normalized in bundle: {month, value})
+  const totalRevenue = useMemo(
+    () => sortByMonthAsc(data?.totalRevenue ?? []),
+    [data?.totalRevenue]
+  );
+  const dataRevenue = useMemo(
+    () => sortByMonthAsc(data?.dataRevenue ?? []),
+    [data?.dataRevenue]
+  );
+  const voiceRevenue = useMemo(
+    () => sortByMonthAsc(data?.voiceRevenue ?? []),
+    [data?.voiceRevenue]
+  );
+
+  // Build single-series datasets for traffic
   const sVoice2G = useMemo(
     () => traffic.map((d) => ({ month: d.month, value: d.voice2g_traffic })),
     [traffic]
@@ -243,7 +261,10 @@ export default function TrendsClient({ name }: Props) {
     sData3G.length === 0 &&
     sData4G.length === 0 &&
     availability.length === 0 &&
-    complaints.length === 0;
+    complaints.length === 0 &&
+    totalRevenue.length === 0 &&
+    dataRevenue.length === 0 &&
+    voiceRevenue.length === 0;
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -308,6 +329,21 @@ export default function TrendsClient({ name }: Props) {
               integerTicks
             />
           </ChartCard>
+
+          {/* 8) Total Revenue */}
+          <ChartCard title="Total Revenue">
+            <SingleLineChart data={totalRevenue} seriesName="Total Revenue" />
+          </ChartCard>
+
+          {/* 9) Data Revenue */}
+          <ChartCard title="Data Revenue">
+            <SingleLineChart data={dataRevenue} seriesName="Data Revenue" />
+          </ChartCard>
+
+          {/* 10) Voice Revenue */}
+          <ChartCard title="Voice Revenue">
+            <SingleLineChart data={voiceRevenue} seriesName="Voice Revenue" />
+          </ChartCard>
         </div>
       )}
 
@@ -339,7 +375,7 @@ function SingleLineChart({
   data: { month: string; value: number | null }[];
   seriesName: string;
 }) {
-  const id = useId(); // unique gradient ids per instance
+  const id = useId();
   const { start, end } = getSeriesColors(seriesName);
   const lineId = `line-${id}`;
   const areaId = `area-${id}`;
@@ -364,8 +400,14 @@ function SingleLineChart({
           tick={{ fontSize: 11, fill: "#6b7280" }}
           tickMargin={6}
         />
-        <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
+        <YAxis
+          tick={{ fontSize: 11, fill: "#6b7280" }}
+          tickFormatter={(v) => (v != null ? v.toLocaleString("en-US") : "")} // 👈 add commas
+        />
         <Tooltip
+          formatter={(value: any) =>
+            typeof value === "number" ? value.toLocaleString("en-US") : value
+          } // 👈 tooltip also formatted
           cursor={{ strokeDasharray: "3 3" }}
           contentStyle={{
             backgroundColor: "rgba(255,255,255,0.95)",

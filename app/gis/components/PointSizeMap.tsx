@@ -1,11 +1,11 @@
-// app/gis/components/PointSizeMap.tsx
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, MapRef, Popup } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
-/** KPIs you want to support for sizing (typed, no `any`) */
 export type KpiKey =
   | "MFULTotalRev"
   | "MFULDataRev"
@@ -16,7 +16,6 @@ export type KpiKey =
   | "voice3GTrafficE"
   | "voLTEVoiceTrafficE";
 
-/** Point shape expected by the map (typed, no `any`) */
 export type MapPoint = {
   Name: string;
   SubRegion: string | null;
@@ -39,9 +38,10 @@ export type MapPoint = {
 
 type Props = {
   points: MapPoint[];
-  kpiKey: KpiKey; // required, controlled by your dropdown
+  kpiKey: KpiKey;
   initialView?: { longitude: number; latitude: number; zoom: number };
   showLegend?: boolean;
+  focusPoint?: { lng: number; lat: number; zoom?: number };
 };
 
 const DEFAULT_VIEW = { longitude: 69.3451, latitude: 30.3753, zoom: 4.8 };
@@ -49,7 +49,7 @@ const DEFAULT_VIEW = { longitude: 69.3451, latitude: 30.3753, zoom: 4.8 };
 function toNumber(val: number | string | null | undefined): number | null {
   if (val === null || typeof val === "undefined") return null;
   if (typeof val === "number") return Number.isFinite(val) ? val : null;
-  const n = Number(val);
+  const n = Number(String(val).replace(/[, ]/g, ""));
   return Number.isFinite(n) ? n : null;
 }
 
@@ -62,10 +62,11 @@ export default function PointSizeMap({
   kpiKey,
   initialView = DEFAULT_VIEW,
   showLegend = true,
+  focusPoint,
 }: Props) {
   const mapRef = useRef<MapRef | null>(null);
+  const router = useRouter();
 
-  // compute KPI range
   const { min, max } = useMemo(() => {
     const nums: number[] = [];
     for (const p of points) {
@@ -76,7 +77,6 @@ export default function PointSizeMap({
     return { min: Math.min(...nums), max: Math.max(...nums) };
   }, [points, kpiKey]);
 
-  // 8 → 34 px linear scale with guards
   const sizeFor = (val: number | string | null | undefined) => {
     const n = toNumber(val);
     if (n === null || max === min) return 8;
@@ -84,7 +84,22 @@ export default function PointSizeMap({
     return 8 + t * (34 - 8);
   };
 
-  const [hover, setHover] = useState<MapPoint | null>(null);
+  // Selected point for popup
+  const [selected, setSelected] = useState<MapPoint | null>(null);
+
+  useEffect(() => {
+    if (!focusPoint) return;
+    const map = mapRef.current?.getMap?.();
+    if (!map) return;
+    const currentZoom = map.getZoom?.() ?? initialView.zoom ?? 5;
+    map.flyTo({
+      center: [focusPoint.lng, focusPoint.lat],
+      zoom: focusPoint.zoom ?? Math.max(currentZoom, 11),
+      essential: true,
+      speed: 1.2,
+      curve: 1.42,
+    });
+  }, [focusPoint, initialView.zoom]);
 
   return (
     <div className="w-full h-full rounded-xl overflow-hidden border">
@@ -110,36 +125,47 @@ export default function PointSizeMap({
             >
               <div
                 title={`${p.Name}\n${kpiKey}: ${p[kpiKey] ?? "-"}`}
-                onMouseEnter={() => setHover(p)}
-                onMouseLeave={() => setHover(null)}
-                className="rounded-full bg-emerald-600/70 border border-white/70 shadow"
+                onClick={() => setSelected(p)} // 👈 switch to click
+                className="rounded-full bg-emerald-600/70 border border-white/70 shadow cursor-pointer"
                 style={{ width: size, height: size }}
               />
             </Marker>
           );
         })}
 
-        {hover && hover.Longitude != null && hover.Latitude != null && (
-          <Popup
-            longitude={hover.Longitude}
-            latitude={hover.Latitude}
-            closeButton={false}
-            onClose={() => setHover(null)}
-            anchor="top"
-          >
-            <div className="text-sm">
-              <div className="font-semibold">{hover.Name}</div>
-              <div>SubRegion: {hover.SubRegion ?? "-"}</div>
-              <div>District: {hover.District ?? "-"}</div>
-              <div>Grid: {hover.Grid ?? "-"}</div>
-              <div>Address: {hover.Address ?? "-"}</div>
-              <div>
-                {kpiKey}: {hover[kpiKey] ?? "-"}
+        {selected &&
+          selected.Longitude != null &&
+          selected.Latitude != null && (
+            <Popup
+              longitude={selected.Longitude}
+              latitude={selected.Latitude}
+              closeButton={true}
+              closeOnClick={false}
+              onClose={() => setSelected(null)}
+              anchor="top"
+            >
+              <div className="text-sm space-y-1">
+                <div className="font-semibold">{selected.Name}</div>
+                <div>SubRegion: {selected.SubRegion ?? "-"}</div>
+                <div>District: {selected.District ?? "-"}</div>
+                <div>Grid: {selected.Grid ?? "-"}</div>
+                <div>Address: {selected.Address ?? "-"}</div>
+                <div>
+                  {kpiKey}: {selected[kpiKey] ?? "-"}
+                </div>
+                <div>Month: {selected.Month ?? "-"}</div>
+                <a
+                  href={`/ssl/vitals/${encodeURIComponent(selected.Name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button size="sm" className="w-full">
+                    Open Site Vitals
+                  </Button>
+                </a>
               </div>
-              <div>Month: {hover.Month ?? "-"}</div>
-            </div>
-          </Popup>
-        )}
+            </Popup>
+          )}
 
         {showLegend && (
           <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur rounded-md px-3 py-2 text-xs shadow">
