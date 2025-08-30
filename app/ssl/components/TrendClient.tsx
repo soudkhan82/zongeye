@@ -336,14 +336,14 @@ export default function TrendsClient({ name }: Props) {
           </ChartCard>
 
           {/* 9) Data Revenue */}
-          <ChartCard title="Data Revenue">
+          {/* <ChartCard title="Data Revenue">
             <SingleLineChart data={dataRevenue} seriesName="Data Revenue" />
-          </ChartCard>
+          </ChartCard> */}
 
           {/* 10) Voice Revenue */}
-          <ChartCard title="Voice Revenue">
+          {/* <ChartCard title="Voice Revenue">
             <SingleLineChart data={voiceRevenue} seriesName="Voice Revenue" />
-          </ChartCard>
+          </ChartCard> */}
         </div>
       )}
 
