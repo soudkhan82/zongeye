@@ -45,8 +45,12 @@ export default function SslPage() {
   // search
   const [search, setSearch] = useState<string>("");
 
+  // NEW: input bound to selected.name
+  const [siteId, setSiteId] = useState<string>("");
+
   const onRowClick = (p: sslSite) => {
     setSelected(p); // drives selectedName prop -> popup in SSlMap
+    setSiteId(p.name ?? ""); // <-- keep input in sync with clicked row
     mapRef.current?.flyTo(p.longitude, p.latitude, 14); // auto-zoom
   };
 
@@ -59,6 +63,7 @@ export default function SslPage() {
     setRows([]);
     setSelected(null);
     setSearch("");
+    setSiteId("");
   }
 
   // load subregions once
@@ -77,6 +82,7 @@ export default function SslPage() {
     setGrid(null);
     setDistrict(null);
     setSelected(null);
+    setSiteId("");
     if (!subregion) {
       setGrids([]);
       setDistricts([]);
@@ -128,13 +134,21 @@ export default function SslPage() {
     });
   }, [rows, search]);
 
+  // handler to open Site Vitals in a new tab
+  const openSiteVitals = () => {
+    const id = siteId?.trim();
+    if (!id) return;
+    const url = `/ssl/vitals/${encodeURIComponent(id)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="w-full p-4 space-y-4">
       <h1 className="text-2xl font-bold text-center my-6 text-indigo-700">
         Geo-Analytics: SSL Sites
       </h1>
 
-      {/* Filters */}
+      {/* Filters + Site Vitals launcher */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
           <span className="text-sm text-muted-foreground">Subregion</span>
@@ -215,6 +229,20 @@ export default function SslPage() {
         </Button>
       </div>
 
+      {/* NEW: Site Vitals quick-open */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted-foreground">Site Vitals:</span>
+        <Input
+          className="w-64"
+          value={siteId}
+          placeholder="Type or click a row to fill…"
+          onChange={(e) => setSiteId(e.target.value)}
+        />
+        <Button onClick={openSiteVitals} disabled={!siteId.trim()}>
+          Site Vitals
+        </Button>
+      </div>
+
       <div className="text-sm text-muted-foreground">
         Showing <span className="font-medium">{filteredRows.length}</span> of{" "}
         <span className="font-medium">{rows.length}</span> results
@@ -253,7 +281,6 @@ export default function SslPage() {
                       onClick={() => onRowClick(r)}
                       title="Click row to zoom & show popup"
                     >
-                      {/* Name is plain text (no link) */}
                       <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell>{r.district ?? "—"}</TableCell>
                       <TableCell>{r.grid ?? "—"}</TableCell>
