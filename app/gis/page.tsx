@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getEquipmentCounts, type EquipCountsRow } from "@/app/actions/gis";
 import {
   getMonsoonSitesFC,
   getSiteAvailabilityTable,
@@ -69,9 +70,29 @@ type WaterFC = GeoJSON.FeatureCollection<
   GeoJSON.LineString | GeoJSON.MultiLineString,
   WaterProps
 >;
+function Stat({
+  label,
+  value,
+  total,
+}: {
+  label: string;
+  value: number;
+  total: number;
+}) {
+  return (
+    <div className="rounded-xl border p-3">
+      <div className="text-xs text-gray-500">{label}</div>
+      <div className="text-2xl font-semibold">{value}</div>
+      <div className="text-xs text-gray-500">{total} sites</div>
+    </div>
+  );
+}
 
 // ---------- Component ----------
 export default function MonsoonSitesPage() {
+  const [equipCounts, setEquipCounts] = useState<EquipCountsRow[]>([]);
+  const [equipErr, setEquipErr] = useState<string | null>(null);
+
   // Subregion daily trend (SQL)
   const [subregionDaily, setSubregionDaily] = useState<SubregionDailyRow[]>([]);
   const [srLoad, setSrLoad] = useState<boolean>(true);
@@ -93,6 +114,28 @@ export default function MonsoonSitesPage() {
   const [siteRows, setSiteRows] = useState<SiteAvailabilityRow[]>([]);
   const [rowsLoading, setRowsLoading] = useState<boolean>(true);
   const [rowsErr, setRowsErr] = useState<string | null>(null);
+  //counters
+  useEffect(() => {
+    (async () => {
+      try {
+        const rows = await getEquipmentCounts();
+        setEquipCounts(rows ?? []);
+      } catch (e: unknown) {
+        setEquipErr(e instanceof Error ? e.message : String(e));
+      }
+    })();
+  }, []);
+  const equipNow = useMemo(() => {
+    const wanted = subregion || "All";
+    const byWanted = equipCounts.find(
+      (r) => (r.SubRegion ?? "Unknown") === wanted
+    );
+    const byAll = equipCounts.find((r) => (r.SubRegion ?? "Unknown") === "All");
+    return (
+      byWanted ??
+      byAll ?? { SubRegion: wanted, moved_yes: 0, packed_yes: 0, total: 0 }
+    );
+  }, [equipCounts, subregion]);
 
   // ---- Fetchers ----
   useEffect(() => {
@@ -353,6 +396,45 @@ export default function MonsoonSitesPage() {
         <div className="text-sm text-red-600">Error: {errorMsg}</div>
       )}
       {rowsErr && <div className="text-sm text-red-600">Error: {rowsErr}</div>}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="col-span-1 md:col-span-3 rounded-2xl border bg-white p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold">
+              Equipment Status{" "}
+              {subregion === "All" ? "(All Subregions)" : `— ${subregion}`}
+            </h2>
+            {equipErr && (
+              <span className="text-sm text-red-600">Error: {equipErr}</span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <Stat
+              label="Moved (Yes)"
+              value={equipNow.moved_yes}
+              total={equipNow.total}
+            />
+            <Stat
+              label="Packed (Yes)"
+              value={equipNow.packed_yes}
+              total={equipNow.total}
+            />
+            <div className="rounded-xl border p-3">
+              <div className="text-xs text-gray-500">Completion</div>
+              <div className="text-2xl font-semibold">
+                {equipNow.total
+                  ? `${(
+                      ((equipNow.moved_yes + equipNow.packed_yes) /
+                        (2 * equipNow.total)) *
+                      100
+                    ).toFixed(1)}%`
+                  : "—"}
+              </div>
+              <div className="text-xs text-gray-500">avg of both</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-3 gap-4">
         {/* Map (2/3) */}
