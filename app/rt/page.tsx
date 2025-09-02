@@ -23,12 +23,13 @@ import {
 
 import { getSubregions } from "@/app/actions/filters";
 import { getDistricts } from "@/app/actions/rt";
-import { getLatestPoints } from "@/app/actions/gis";
+// import { getLatestPoints } from "@/app/actions/gis";
 
 import PointSizeMap, {
   MapPoint as SizeMapPoint,
   KpiKey,
 } from "@/app/gis/components/PointSizeMap";
+import { getLatestPoints } from "../actions/gis";
 
 type LatestKpiRow = {
   Name: string;
