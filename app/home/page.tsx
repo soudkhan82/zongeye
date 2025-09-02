@@ -1,6 +1,8 @@
 // app/page.tsx
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -32,6 +34,7 @@ const TABS: TabDef[] = [
     image: "/images/tasks.jpg",
   },
   { value: "ssl", label: "Network", href: "/ssl", image: "/images/ssl.png" },
+  { value: "ssl", label: "Monsoon", href: "/gis", image: "/images/ssl.png" },
 ];
 
 export default function Page() {
@@ -64,7 +67,7 @@ export default function Page() {
           </p>
         </header>
 
-        {/* One-row equal-width tiles with full background cover */}
+        {/* One-row equal-width tiles with full-bleed image cover */}
         <div className="flex w-full items-stretch gap-4 md:gap-5">
           {TABS.map((t) => (
             <motion.div
@@ -78,16 +81,29 @@ export default function Page() {
               className={[
                 "group relative cursor-pointer select-none",
                 "flex-1 basis-0 min-w-0",
-                "aspect-[16/9] rounded-2xl overflow-hidden", // 👈 consistent size
-                "border border-white/10 shadow-xl bg-cover bg-center", // 👈 ensures full cover
+                "aspect-[16/9] rounded-2xl overflow-hidden",
+                "border border-white/10 shadow-xl",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400",
+                "bg-neutral-900", // fallback bg before image load
               ].join(" ")}
-              style={{ backgroundImage: `url(${t.image})` }} // 👈 tile bg is the image
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.01 }}
               transition={{ type: "spring", stiffness: 220, damping: 18 }}
             >
-              {/* Dark overlay */}
+              {/* Image fills entire tile with perfect cover */}
+              <Image
+                src={t.image}
+                alt={t.label}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 20vw"
+                priority={t.value === "rt"} // prefetch first tile for snappy feel
+                className="object-cover"
+              />
+
+              {/* Subtle gradient borders on hover */}
+              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/10 group-hover:ring-white/20 transition-all" />
+
+              {/* Dark overlay for readability */}
               <div className="absolute inset-0 bg-black/45 transition-colors duration-300 group-hover:bg-black/30" />
 
               {/* Sheen */}
@@ -105,7 +121,17 @@ export default function Page() {
                 <h2 className="text-lg sm:text-xl md:text-2xl font-semibold drop-shadow">
                   {t.label}
                 </h2>
+                {/* Optional sublabel or CTA */}
+                {/* <p className="text-sm text-slate-200/90">Open {t.label}</p> */}
               </motion.div>
+
+              {/* Make the whole card a link for a11y (keeps router push too) */}
+              <Link
+                href={t.href}
+                tabIndex={-1}
+                className="absolute inset-0"
+                aria-hidden="true"
+              />
             </motion.div>
           ))}
         </div>
