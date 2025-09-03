@@ -34,7 +34,12 @@ const TABS: TabDef[] = [
     image: "/images/tasks.jpg",
   },
   { value: "ssl", label: "Network", href: "/ssl", image: "/images/ssl.png" },
-  { value: "ssl", label: "Monsoon", href: "/gis", image: "/images/ssl.png" },
+  {
+    value: "Rain",
+    label: "Monsoon",
+    href: "/gis",
+    image: "/images/monsoon.jpg",
+  },
 ];
 
 export default function Page() {
