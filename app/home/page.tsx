@@ -14,18 +14,23 @@ type TabDef = {
 };
 
 const TABS: TabDef[] = [
-  { value: "rt", label: "Metrices", href: "/rt", image: "/images/kpi.png" },
+  {
+    value: "rt",
+    label: "Metrices",
+    href: "/rt",
+    image: "/images/performance.jpg",
+  },
   {
     value: "complaints",
     label: "Complaints",
     href: "/complaints",
-    image: "/images/complaints.png",
+    image: "/images/complaints.jpg",
   },
   {
     value: "avail",
     label: "Availability",
     href: "/avail",
-    image: "/images/availability.png",
+    image: "/images/availability.jpg",
   },
   {
     value: "tasks",
@@ -33,7 +38,12 @@ const TABS: TabDef[] = [
     href: "/tasks",
     image: "/images/tasks.jpg",
   },
-  { value: "ssl", label: "Network", href: "/ssl", image: "/images/ssl.png" },
+  {
+    value: "ssl",
+    label: "Network",
+    href: "/ssl",
+    image: "/images/pakistan.jpg",
+  },
   {
     value: "Rain",
     label: "Monsoon",
