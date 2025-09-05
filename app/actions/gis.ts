@@ -48,13 +48,6 @@ export type DailyRow = {
   AvgAvailability: number | null;
 };
 
-export type DistrictSummaryRow = {
-  SubRegion: string | null;
-  District: string | null;
-  SiteCount: number;
-  AvgAvailability: number | null;
-};
-
 export async function getAvailabilityDaily(): Promise<DailyRow[]> {
   const { data, error } = await supabase.rpc("availability_daily");
   if (error) {
@@ -64,16 +57,16 @@ export async function getAvailabilityDaily(): Promise<DailyRow[]> {
   return (data ?? []) as DailyRow[];
 }
 
-export async function getAvailabilityDistrictSummary(): Promise<
-  DistrictSummaryRow[]
-> {
-  const { data, error } = await supabase.rpc("availability_district_summary");
-  if (error) {
-    console.error("availability_district_summary error:", error);
-    return [];
-  }
-  return (data ?? []) as DistrictSummaryRow[];
-}
+// export async function getAvailabilityDistrictSummary(): Promise<
+//   DistrictSummaryRow[]
+// > {
+//   const { data, error } = await supabase.rpc("availability_district_summary");
+//   if (error) {
+//     console.error("availability_district_summary error:", error);
+//     return [];
+//   }
+//   return (data ?? []) as DistrictSummaryRow[];
+// }
 
 export type SitePointRow = {
   id: number;
@@ -161,7 +154,21 @@ export type SubregionDailyRow = {
   AvgAvailability: number | null;
 };
 
-export async function getSubregionAvailabilityDaily(): Promise<
+export async function getSubregionAvailabilityDaily_monsoon(): Promise<
+  SubregionDailyRow[]
+> {
+  const { data, error } = await supabase
+    .rpc("subregion_availability_daily_monsoon")
+    .returns<SubregionDailyRow[]>();
+
+  if (error) {
+    console.error("[gis] subregion_availability_daily error:", error);
+    return [];
+  }
+  return Array.isArray(data) ? data : [];
+}
+
+export async function getSubregionAvailabilityDaily_overall(): Promise<
   SubregionDailyRow[]
 > {
   const { data, error } = await supabase
@@ -169,7 +176,7 @@ export async function getSubregionAvailabilityDaily(): Promise<
     .returns<SubregionDailyRow[]>();
 
   if (error) {
-    console.error("[gis] subregion_availability_daily error:", error);
+    console.error("[rpc subregion_availability_daily] error:", error);
     return [];
   }
   return Array.isArray(data) ? data : [];

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getEquipmentCounts, type EquipCountsRow } from "@/app/actions/gis";
 import {
+  getEquipmentCounts,
   getMonsoonSitesFC,
   getSiteAvailabilityTable,
-  getSubregionAvailabilityDaily,
+  getSubregionAvailabilityDaily_monsoon,
+  getSubregionAvailabilityDaily_overall,
+  type EquipCountsRow,
   type SubregionDailyRow,
   type FeatureCollection as SitesFC,
   type SiteAvailabilityRow,
@@ -19,6 +21,7 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 
 import ReactMap, {
@@ -32,7 +35,7 @@ import ReactMap, {
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-// ---------- Helpers (strict typing) ----------
+// ---------- Helpers ----------
 type PropsRec = Record<string, unknown>;
 
 const readString = (obj: PropsRec | undefined, key: string): string | null => {
@@ -70,6 +73,7 @@ type WaterFC = GeoJSON.FeatureCollection<
   GeoJSON.LineString | GeoJSON.MultiLineString,
   WaterProps
 >;
+
 function Stat({
   label,
   value,
@@ -88,22 +92,214 @@ function Stat({
   );
 }
 
-// ---------- Component ----------
+// --- Small components -------------------------------------------------
+type ChartPoint = { Timeline: string; AvgAvailability: number | null };
+
+// ✅ Two-line ChartsCard: Overall (by subregion) vs monsoon_sites_availability
+function ChartsCard({
+  srLoad,
+  msLoad,
+  subregionTrendData,
+  monsoonSitesTrendData,
+  subregion,
+}: {
+  srLoad: boolean;
+  msLoad: boolean;
+  subregionTrendData: ChartPoint[]; // overall series
+  monsoonSitesTrendData: ChartPoint[]; // monsoon series
+  subregion: string;
+}) {
+  type Merged = {
+    Timeline: string;
+    Subregion: number | null;
+    MonsoonSites: number | null;
+  };
+
+  const mergedData: Merged[] = useMemo(() => {
+    const byDate = new Map<string, Merged>();
+    const put = (
+      date: string,
+      key: "Subregion" | "MonsoonSites",
+      v: number | null
+    ) => {
+      const k = date.slice(0, 10);
+      const prev = byDate.get(k) ?? {
+        Timeline: k,
+        Subregion: null,
+        MonsoonSites: null,
+      };
+      prev[key] = v;
+      byDate.set(k, prev);
+    };
+    subregionTrendData.forEach((p) =>
+      put(p.Timeline, "Subregion", p.AvgAvailability)
+    );
+    monsoonSitesTrendData.forEach((p) =>
+      put(p.Timeline, "MonsoonSites", p.AvgAvailability)
+    );
+    return Array.from(byDate.values()).sort((a, b) =>
+      a.Timeline.localeCompare(b.Timeline)
+    );
+  }, [subregionTrendData, monsoonSitesTrendData]);
+
+  const isLoading = srLoad || msLoad;
+  const hasData = mergedData.length > 0;
+
+  return (
+    <div className="rounded-2xl border bg-white p-3 h-[55vh] md:h-[50vh] lg:h-[75vh] min-w-0">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-semibold">
+          Availability — {subregion === "All" ? "All Subregions" : subregion} vs{" "}
+          monsoon_sites_availability
+        </h3>
+        {!isLoading && (
+          <span className="text-xs text-gray-500">
+            {mergedData.length} days
+          </span>
+        )}
+      </div>
+
+      <div className="h-[calc(100%-1.5rem)] min-w-0">
+        {isLoading || !hasData ? (
+          <div className="text-xs text-gray-600 h-full flex items-center justify-center">
+            {isLoading ? "Loading…" : "No data."}
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              key={`combined-${subregion}-${mergedData.length}`}
+              data={mergedData}
+              margin={{ top: 6, right: 12, left: 8, bottom: 4 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="Timeline"
+                tick={{ fontSize: 10 }}
+                minTickGap={16}
+              />
+              <YAxis
+                domain={[0, 100]}
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v) => `${v}%`}
+              />
+              <Tooltip
+                formatter={(v: unknown, name: string) =>
+                  v == null ? ["—", name] : [`${Number(v).toFixed(2)}%`, name]
+                }
+                labelFormatter={(l: string) => `Date: ${l}`}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Line
+                type="monotone"
+                dataKey="Subregion"
+                name={subregion === "All" ? "All Subregions" : subregion}
+                stroke="#ef4444"
+                strokeWidth={1.8}
+                dot={false}
+                connectNulls
+              />
+              <Line
+                type="monotone"
+                dataKey="MonsoonSites"
+                name="monsoon_sites_availability"
+                stroke="#10b981"
+                strokeWidth={1.8}
+                dot={false}
+                connectNulls
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SiteTable({
+  q,
+  setQ,
+  rows,
+  onRowClick,
+}: {
+  q: string;
+  setQ: (v: string) => void;
+  rows: SiteAvailabilityRow[];
+  onRowClick: (siteId: string) => void;
+}) {
+  return (
+    <div className="rounded-2xl border bg-white h-[50vh] md:h-[55vh] lg:h-[65vh] flex flex-col min-w-0">
+      <div className="p-3 border-b flex items-center gap-2">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search SiteID or District…"
+          className="w-full text-sm border rounded px-2 py-1"
+        />
+        <span className="text-xs text-gray-500 whitespace-nowrap">
+          {rows.length} rows
+        </span>
+      </div>
+      <div className="flex-1 overflow-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="text-left border-b sticky top-0 bg-white z-10">
+              <th className="py-1 px-2">SiteID</th>
+              <th className="py-1 px-2">District</th>
+              <th className="py-1 px-2 text-right">Availability</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr
+                key={r.SiteID}
+                className="border-b hover:bg-indigo-50 cursor-pointer"
+                onClick={() => onRowClick(r.SiteID)}
+                onKeyDown={(e) => e.key === "Enter" && onRowClick(r.SiteID)}
+                tabIndex={0}
+              >
+                <td className="py-1 px-2 font-medium">{r.SiteID}</td>
+                <td className="py-1 px-2">{r.District ?? "—"}</td>
+                <td className="py-1 px-2 text-right">
+                  {r.Availability == null
+                    ? "—"
+                    : `${Number(r.Availability).toFixed(2)}%`}
+                </td>
+              </tr>
+            ))}
+            {!rows.length && (
+              <tr>
+                <td colSpan={3} className="py-3 px-2 text-center text-gray-500">
+                  No matching rows.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Page ----------
 export default function MonsoonSitesPage() {
   const [equipCounts, setEquipCounts] = useState<EquipCountsRow[]>([]);
   const [equipErr, setEquipErr] = useState<string | null>(null);
 
-  // Subregion daily trend (SQL)
-  const [subregionDaily, setSubregionDaily] = useState<SubregionDailyRow[]>([]);
+  // Monsoon & Overall time series (per subregion & "All")
+  const [subregionDaily, setSubregionDaily] = useState<SubregionDailyRow[]>([]); // monsoon
   const [srLoad, setSrLoad] = useState<boolean>(true);
   const [srErr, setSrErr] = useState<string | null>(null);
+
+  const [overallDaily, setOverallDaily] = useState<SubregionDailyRow[]>([]); // overall
+  const [ovrLoad, setOvrLoad] = useState<boolean>(true);
+  const [ovrErr, setOvrErr] = useState<string | null>(null);
 
   // Map + data states
   const mapRef = useRef<MapRef | null>(null);
   const [sitesFC, setSitesFC] = useState<SitesFC | null>(null);
   const [waterways, setWaterways] = useState<WaterFC | null>(null);
   const [hover, setHover] = useState<HoverInfo>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // fetching getMonsoonSitesFC (for map)
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Filters + table
@@ -114,7 +310,8 @@ export default function MonsoonSitesPage() {
   const [siteRows, setSiteRows] = useState<SiteAvailabilityRow[]>([]);
   const [rowsLoading, setRowsLoading] = useState<boolean>(true);
   const [rowsErr, setRowsErr] = useState<string | null>(null);
-  //counters
+
+  // Counters
   useEffect(() => {
     (async () => {
       try {
@@ -125,6 +322,7 @@ export default function MonsoonSitesPage() {
       }
     })();
   }, []);
+
   const equipNow = useMemo(() => {
     const wanted = subregion || "All";
     const byWanted = equipCounts.find(
@@ -142,12 +340,26 @@ export default function MonsoonSitesPage() {
     (async () => {
       try {
         setSrLoad(true);
-        const rows = await getSubregionAvailabilityDaily();
+        const rows = await getSubregionAvailabilityDaily_monsoon();
         setSubregionDaily(rows ?? []);
       } catch (e: unknown) {
         setSrErr(e instanceof Error ? e.message : String(e));
       } finally {
         setSrLoad(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setOvrLoad(true);
+        const rows = await getSubregionAvailabilityDaily_overall();
+        setOverallDaily(rows ?? []);
+      } catch (e: unknown) {
+        setOvrErr(e instanceof Error ? e.message : String(e));
+      } finally {
+        setOvrLoad(false);
       }
     })();
   }, []);
@@ -187,7 +399,6 @@ export default function MonsoonSitesPage() {
         if (!res.ok) throw new Error(`Waterways HTTP ${res.status}`);
         const raw = (await res.json()) as GeoJSON.FeatureCollection;
 
-        // Narrow to WaterFC and filter
         const feats = raw.features.filter(
           (f): f is WaterFC["features"][number] => {
             const props = (f.properties ?? {}) as PropsRec;
@@ -206,9 +417,22 @@ export default function MonsoonSitesPage() {
   }, []);
 
   // ---- Derived data ----
-  const subregionTrendData = useMemo<
-    { Timeline: string; AvgAvailability: number | null }[]
-  >(() => {
+  // Overall series (now used as the "Subregion" red line)
+  const subregionTrendData = useMemo<ChartPoint[]>(() => {
+    if (!overallDaily.length) return [];
+    const wanted = subregion || "All";
+    return overallDaily
+      .filter((r) => (r.SubRegion ?? "Unknown") === wanted)
+      .map((r) => ({
+        Timeline: String(r.Timeline).slice(0, 10),
+        AvgAvailability:
+          r.AvgAvailability == null ? null : Number(r.AvgAvailability),
+      }))
+      .sort((a, b) => a.Timeline.localeCompare(b.Timeline));
+  }, [overallDaily, subregion]);
+
+  // Monsoon series (green, labeled monsoon_sites_availability)
+  const monsoonSitesTrendData = useMemo<ChartPoint[]>(() => {
     if (!subregionDaily.length) return [];
     const wanted = subregion || "All";
     return subregionDaily
@@ -273,15 +497,14 @@ export default function MonsoonSitesPage() {
     });
   }, [siteRows, q, subregion, siteIndex]);
 
-  // ---- Map events (strict) ----
-
-  //helper
+  // ---- Map events ----
   type MLFeature = GeoJSON.Feature<
     GeoJSON.Geometry,
     Record<string, unknown>
   > & {
     layer?: { id?: string };
   };
+
   const handleMouseMove = (e: MapLayerMouseEvent) => {
     const feat = (e.features && e.features[0]) as MLFeature | undefined;
     const canvas = mapRef.current?.getCanvas?.();
@@ -396,6 +619,10 @@ export default function MonsoonSitesPage() {
         <div className="text-sm text-red-600">Error: {errorMsg}</div>
       )}
       {rowsErr && <div className="text-sm text-red-600">Error: {rowsErr}</div>}
+      {srErr && <div className="text-sm text-red-600">Error: {srErr}</div>}
+      {ovrErr && <div className="text-sm text-red-600">Error: {ovrErr}</div>}
+
+      {/* Equipment cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="col-span-1 md:col-span-3 rounded-2xl border bg-white p-4">
           <div className="flex items-center justify-between mb-2">
@@ -436,9 +663,10 @@ export default function MonsoonSitesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        {/* Map (2/3) */}
-        <div className="col-span-2 h-[72vh] rounded-2xl overflow-hidden border bg-white">
+      {/* Map + right rail */}
+      <div className="grid grid-cols-5 gap-2">
+        {/* MAP */}
+        <div className="col-span-3 h-[54vh] md:h-[56vh] lg:h-[58vh] rounded-2xl overflow-hidden border bg-white">
           <ReactMap
             ref={mapRef}
             mapLib={maplibregl}
@@ -565,121 +793,23 @@ export default function MonsoonSitesPage() {
           </ReactMap>
         </div>
 
-        {/* Right column: Subregion trend + searchable table */}
-        <div className="h-[72vh] overflow-hidden border rounded-2xl bg-white flex flex-col">
-          {/* Subregion availability trend */}
-          <div className="p-3 border-b">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold">
-                Subregion Availability Trend{" "}
-                {subregion === "All" ? "(All Subregions)" : `— ${subregion}`}
-              </h2>
-              {!srLoad && (
-                <span className="text-xs text-gray-500">
-                  {subregionTrendData.length} days
-                </span>
-              )}
-            </div>
-            {srErr && (
-              <div className="text-sm text-red-600">Error: {srErr}</div>
-            )}
-            <div className="h-48">
-              {srLoad || subregionTrendData.length === 0 ? (
-                <div className="text-sm text-gray-600 h-full flex items-center justify-center">
-                  {srLoad ? "Loading trend…" : "No trend data."}
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={subregionTrendData}
-                    margin={{ top: 6, right: 12, left: 8, bottom: 4 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="Timeline"
-                      tick={{ fontSize: 11 }}
-                      minTickGap={16}
-                    />
-                    <YAxis
-                      domain={[0, 100]}
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(v) => `${v}%`}
-                    />
-                    <Tooltip
-                      formatter={(v: unknown) =>
-                        v == null
-                          ? ["—", "Avg Availability"]
-                          : [`${Number(v).toFixed(2)}%`, "Avg Availability"]
-                      }
-                      labelFormatter={(l: string) => `Date: ${l}`}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="AvgAvailability"
-                      name="Avg Availability"
-                      strokeWidth={1.8}
-                      dot={false}
-                      connectNulls={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-
-          {/* Search header + table */}
-          <div className="p-3 border-b flex items-center gap-2">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search SiteID or District…"
-              className="w-full text-sm border rounded px-2 py-1"
-            />
-            <span className="text-xs text-gray-500 whitespace-nowrap">
-              {visibleRows.length} rows
-            </span>
-          </div>
-
-          <div className="overflow-auto flex-1">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="text-left border-b sticky top-0 bg-white">
-                  <th className="py-1 px-2">SiteID</th>
-                  <th className="py-1 px-2">District</th>
-                  <th className="py-1 px-2 text-right">Availability</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRows.map((r) => (
-                  <tr
-                    key={r.SiteID}
-                    className="border-b hover:bg-indigo-50 cursor-pointer"
-                    onClick={() => flyToSite(r.SiteID)}
-                    onKeyDown={(e) => e.key === "Enter" && flyToSite(r.SiteID)}
-                    tabIndex={0}
-                  >
-                    <td className="py-1 px-2 font-medium">{r.SiteID}</td>
-                    <td className="py-1 px-2">{r.District ?? "—"}</td>
-                    <td className="py-1 px-2 text-right">
-                      {r.Availability == null
-                        ? "—"
-                        : `${Number(r.Availability).toFixed(2)}%`}
-                    </td>
-                  </tr>
-                ))}
-                {!visibleRows.length && (
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="py-3 px-2 text-center text-gray-500"
-                    >
-                      No matching rows.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        {/* RIGHT RAIL — two-line chart + table */}
+        <div className="col-span-2 flex flex-col gap-4 min-w-0 ">
+          <ChartsCard
+            srLoad={ovrLoad} // overall series loading
+            msLoad={srLoad} // monsoon series loading
+            subregionTrendData={subregionTrendData} // overall
+            monsoonSitesTrendData={monsoonSitesTrendData} // monsoon
+            subregion={subregion}
+          />
+        </div>
+        <div className="col-span-2 flex flex-col gap-4 min-w-0 mt-2">
+          <SiteTable
+            q={q}
+            setQ={setQ}
+            rows={visibleRows}
+            onRowClick={flyToSite}
+          />
         </div>
       </div>
     </div>
